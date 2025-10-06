@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # PostgreSQL Exporter
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  # Redis Exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  # Services (will be added as we create them)
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:50051']
+
+  - job_name: 'task-service'
+    static_configs:
+      - targets: ['task-service:50052']
+
+  - job_name: 'analytics-service'
+    static_configs:
+      - targets: ['analytics-service:50053']
+
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:50054']
+
+  - job_name: 'file-service'
+    static_configs:
+      - targets: ['file-service:50055']
