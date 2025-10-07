@@ -1,0 +1,11 @@
+{
+  "name": "@repo/common",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+  },
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2"
+  }
+}
