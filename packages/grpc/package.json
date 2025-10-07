@@ -5,7 +5,11 @@
   "exports": {
     "./auth": {
       "types": "./shared-types/auth.ts",
-      "default": "./dist/auth.js"
+      "default": "./dist/shared-types/auth.js"
+    },
+    "./exception": {
+      "types": "./src/rpc.exceptions.ts",
+      "default": "./dist/src/rpc.exceptions.js"
     }
   },
   "scripts": {
@@ -13,11 +17,9 @@
     "generate-ts-proto": "protoc --plugin=../../node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=./shared-types --ts_proto_opt=nestJs=true --ts_proto_opt=exportCommonSymbols=false --proto_path=./proto ./proto/*.proto"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.13.4",
-    "@nestjs/microservices": "^11.1.6"
+    "@grpc/grpc-js": "^1.13.4"
   },
   "devDependencies": {
-    "copyfiles": "^2.4.1",
     "ts-proto": "^2.7.7",
     "typescript": "5.9.2"
   }

@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -16,6 +12,11 @@ import { ValidatedUserModel } from '../interfaces/validated-user.interface';
 import { UserPayload } from '../interfaces/user-payload.interface';
 import { ConfigService } from '@nestjs/config';
 import { AuthLogic } from './auth.logic';
+import {
+  AlreadyExistsRpcException,
+  NotFoundRpcException,
+  UnAuthenticateRpcException,
+} from '@repo/grpc/exception';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +25,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
   ) {}
-
   public async validateUser(
     email: string,
     password: string,
@@ -44,12 +44,12 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new NotFoundRpcException('User not found');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnAuthenticateRpcException('Invalid credentials');
     }
 
     const response: ValidatedUserModel = {
@@ -70,8 +70,8 @@ export class AuthService {
       },
     });
 
-    if (existingUser) {
-      throw new ConflictException('Email or username already exists');
+    if (existingUser && existingUser.isActive) {
+      throw new AlreadyExistsRpcException('Email or username already exists');
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -96,7 +96,7 @@ export class AuthService {
         email: String(createdUser.email),
         username: String(createdUser.username),
         role: String(createdUser.role),
-        createdAt: String(createdUser.createdAt),
+        createdAt: String(createdUser.createdAt.toISOString()),
       },
     };
     return response;
@@ -152,10 +152,10 @@ export class AuthService {
     });
 
     if (!token) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnAuthenticateRpcException('Invalid refresh token');
     }
     if (token.expiresAt < new Date()) {
-      throw new UnauthorizedException('Refresh token has been expired');
+      throw new UnAuthenticateRpcException('Refresh token has been expired');
     }
     const payload: UserPayload = {
       sub: token.user.id,
@@ -184,7 +184,7 @@ export class AuthService {
       const payload = this.jwtService.verify(token);
       return payload;
     } catch {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnAuthenticateRpcException('Invalid token');
     }
   }
 }
