@@ -8,6 +8,7 @@ service AuthService {
   rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
   rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc ValidateUser(ValidateUserRequest) returns (ValidateUserResponse);
 }
 
 message RegisterRequest {
@@ -70,4 +71,13 @@ message TokenPayload {
   string email = 2;
   string username = 3;
   string role = 4;
+}
+
+message ValidateUserRequest {
+  string userId = 1;
+}
+
+message ValidateUserResponse {
+  bool valid = 1;
+  User user = 2;
 }

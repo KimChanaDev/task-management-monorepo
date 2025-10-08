@@ -13,6 +13,8 @@ import {
   type RegisterResponse,
   type ValidateTokenRequest,
   type ValidateTokenResponse,
+  type ValidateUserRequest,
+  type ValidateUserResponse,
 } from '@repo/grpc/auth';
 import { ValidatedUserModel } from '../interfaces/validated-user.interface';
 
@@ -55,6 +57,12 @@ export class AuthController implements AuthServiceController {
       data.userId,
       data.refreshToken,
     );
+    return response;
+  }
+
+  async validateUser(data: ValidateUserRequest): Promise<ValidateUserResponse> {
+    const response: ValidateUserResponse =
+      await this.authService.validateUserById(data.userId);
     return response;
   }
 }

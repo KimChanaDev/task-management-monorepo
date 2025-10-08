@@ -7,6 +7,7 @@ import {
   LogoutResponse,
   RefreshTokenResponse,
   RegisterResponse,
+  ValidateUserResponse,
 } from '@repo/grpc/auth';
 import { ValidatedUserModel } from '../interfaces/validated-user.interface';
 import { UserPayload } from '../interfaces/user-payload.interface';
@@ -186,5 +187,32 @@ export class AuthService {
     } catch {
       throw new UnAuthenticateRpcException('Invalid token');
     }
+  }
+
+  public async validateUserById(userId: string): Promise<ValidateUserResponse> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId, isActive: true },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+    if (!user) {
+      return { valid: false, user: undefined } as ValidateUserResponse;
+    }
+
+    return {
+      valid: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        createdAt: user.createdAt.toISOString(),
+      },
+    } as ValidateUserResponse;
   }
 }

@@ -2,16 +2,6 @@
   "name": "@repo/grpc",
   "version": "0.0.0",
   "private": true,
-  "exports": {
-    "./auth": {
-      "types": "./shared-types/auth.ts",
-      "default": "./dist/shared-types/auth.js"
-    },
-    "./exception": {
-      "types": "./src/rpc.exceptions.ts",
-      "default": "./dist/src/rpc.exceptions.js"
-    }
-  },
   "scripts": {
     "build": "tsc -b",
     "generate-ts-proto": "protoc --plugin=../../node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=./shared-types --ts_proto_opt=nestJs=true --ts_proto_opt=exportCommonSymbols=false --proto_path=./proto ./proto/*.proto"
@@ -22,5 +12,23 @@
   "devDependencies": {
     "ts-proto": "^2.7.7",
     "typescript": "5.9.2"
+  },
+  "exports": {
+    "./auth": {
+      "types": "./shared-types/auth.ts",
+      "default": "./dist/shared-types/auth.js"
+    },
+    "./task": {
+      "types": "./shared-types/task.ts",
+      "default": "./dist/shared-types/task.js"
+    },
+    "./exception": {
+      "types": "./src/rpc.exceptions.ts",
+      "default": "./dist/src/rpc.exceptions.js"
+    },
+    "./package": {
+      "types": "./src/proto-package.enum.ts",
+      "default": "./dist/src/proto-package.enum.js"
+    }
   }
 }

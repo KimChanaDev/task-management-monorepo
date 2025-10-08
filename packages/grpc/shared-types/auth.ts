@@ -70,6 +70,15 @@ export interface TokenPayload {
   role: string;
 }
 
+export interface ValidateUserRequest {
+  userId: string;
+}
+
+export interface ValidateUserResponse {
+  valid: boolean;
+  user: User | undefined;
+}
+
 export interface AuthServiceClient {
   register(request: RegisterRequest): Observable<RegisterResponse>;
 
@@ -82,6 +91,8 @@ export interface AuthServiceClient {
   refreshToken(request: RefreshTokenRequest): Observable<RefreshTokenResponse>;
 
   logout(request: LogoutRequest): Observable<LogoutResponse>;
+
+  validateUser(request: ValidateUserRequest): Observable<ValidateUserResponse>;
 }
 
 export interface AuthServiceController {
@@ -113,6 +124,13 @@ export interface AuthServiceController {
   logout(
     request: LogoutRequest,
   ): Promise<LogoutResponse> | Observable<LogoutResponse> | LogoutResponse;
+
+  validateUser(
+    request: ValidateUserRequest,
+  ):
+    | Promise<ValidateUserResponse>
+    | Observable<ValidateUserResponse>
+    | ValidateUserResponse;
 }
 
 export function AuthServiceControllerMethods() {
@@ -123,6 +141,7 @@ export function AuthServiceControllerMethods() {
       "validateToken",
       "refreshToken",
       "logout",
+      "validateUser",
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(

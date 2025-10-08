@@ -12,10 +12,10 @@ async function bootstrap() {
   app.connectMicroservice<GrpcOptions>({
     transport: Transport.GRPC,
     options: {
-      package: 'auth',
+      package: 'task',
       protoPath: join(
         __dirname,
-        '../../../node_modules/@repo/grpc/proto/auth.proto',
+        '../../../node_modules/@repo/grpc/proto/task.proto',
       ),
       url: `0.0.0.0:${grpcPort}`,
     },
@@ -29,7 +29,7 @@ async function bootstrap() {
   );
   await app.startAllMicroservices();
   await app.listen(httpPort);
-  console.log(`🚀 Auth http service is running on port ${httpPort}`);
-  console.log(`🚀 Auth grpc service is running on port ${grpcPort}`);
+  console.log(`🚀 Task http service is running on port ${httpPort}`);
+  console.log(`🚀 Task grpc service is running on port ${grpcPort}`);
 }
 void bootstrap();
