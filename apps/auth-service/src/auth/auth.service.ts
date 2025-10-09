@@ -9,15 +9,14 @@ import {
   RegisterResponse,
   ValidateUserResponse,
 } from '@repo/grpc/auth';
-import { ValidatedUserModel } from '../interfaces/validated-user.interface';
-import { UserPayload } from '../interfaces/user-payload.interface';
+import { ValidatedUserModel } from './interfaces/validated-user.interface';
+import { UserPayload } from './interfaces/user-payload.interface';
 import { ConfigService } from '@nestjs/config';
 import { AuthLogic } from './auth.logic';
-import {
-  AlreadyExistsRpcException,
-  NotFoundRpcException,
-  UnAuthenticateRpcException,
-} from '@repo/grpc/exception';
+import { UnAuthenticateRpcException } from '@repo/grpc/exception';
+import { Prisma } from '@prisma/client/auth-service/index.js';
+import { AuthRepository } from './auth.repository';
+import { AuthValidation } from './auth.validation';
 
 @Injectable()
 export class AuthService {
@@ -25,39 +24,24 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
+    private readonly authRepository: AuthRepository,
   ) {}
   public async validateUser(
     email: string,
     password: string,
   ): Promise<ValidatedUserModel> {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        email,
-        isActive: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        role: true,
-        password: true,
-        createdAt: true,
-      },
-    });
-    if (!user) {
-      throw new NotFoundRpcException('User not found');
-    }
+    const user = await this.authRepository.findUniqueUser(
+      AuthLogic.userWhereUniqueEmail(email),
+      AuthLogic.userSelect(),
+    );
+    AuthValidation.ensureUserFound(user);
+    const isPasswordValid = await bcrypt.compare(password, user!.password);
+    AuthValidation.ensureValidCredential(isPasswordValid);
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnAuthenticateRpcException('Invalid credentials');
-    }
-
-    const response: ValidatedUserModel = {
+    return {
       ...user,
-      createdAt: String(user.createdAt),
-    };
-    return response;
+      createdAt: user!.createdAt.toISOString(),
+    } as ValidatedUserModel;
   }
 
   public async register(
@@ -65,124 +49,85 @@ export class AuthService {
     username: string,
     password: string,
   ): Promise<RegisterResponse> {
-    const existingUser = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { username }],
-      },
-    });
-
-    if (existingUser && existingUser.isActive) {
-      throw new AlreadyExistsRpcException('Email or username already exists');
-    }
+    const existingUser = await this.authRepository.findUser(
+      AuthLogic.userWhereEmailOrUsername(email, username),
+    );
+    AuthValidation.ensureUserNotExists(existingUser);
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const createdUser = await this.prisma.user.create({
-      data: {
-        email,
-        username,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        role: true,
-        createdAt: true,
-      },
-    });
-
-    const response: RegisterResponse = {
-      user: {
-        id: String(createdUser.id),
-        email: String(createdUser.email),
-        username: String(createdUser.username),
-        role: String(createdUser.role),
-        createdAt: String(createdUser.createdAt.toISOString()),
-      },
+    const createData: Prisma.UserCreateInput = {
+      email,
+      username,
+      password: hashedPassword,
     };
-    return response;
+    const createdUser = await this.authRepository.createUser(
+      createData,
+      AuthLogic.userSelectWithoutPassword(),
+    );
+    return {
+      user: { ...createdUser, createdAt: createdUser.createdAt.toISOString() },
+    } as RegisterResponse;
   }
 
-  public async login(user: ValidatedUserModel) {
-    const payload: UserPayload = {
-      sub: user.id,
-      email: user.email,
-      username: user.username,
-      role: user.role,
-    };
-
+  public async login(user: ValidatedUserModel): Promise<LoginResponse> {
+    const payload: UserPayload = AuthLogic.createUserPayload(
+      user.id,
+      user.email,
+      user.username,
+      user.role,
+    );
     const accessToken: string = this.jwtService.sign(payload);
     const refreshToken: string = await this.createRefreshToken(user.id);
-    const response: LoginResponse = {
+    return {
       accessToken,
       refreshToken,
       user,
-    };
-    return response;
+    } as LoginResponse;
   }
 
   private async createRefreshToken(userId: string): Promise<string> {
     const expiresIn: string = this.config.getOrThrow<string>(
       'REFRESH_TOKEN_EXPIRES_IN',
     );
-
-    const token: string = this.jwtService.sign(
+    const refreshToken: string = this.jwtService.sign(
       { sub: userId, type: 'refresh' },
       { expiresIn },
     );
-
-    await this.prisma.refreshToken.create({
-      data: {
-        token,
-        userId,
-        expiresAt: new Date(Date.now() + AuthLogic.parseExpiresIn(expiresIn)),
-      },
-    });
-
-    return token;
+    const createData: Prisma.RefreshTokenUncheckedCreateInput = {
+      token: refreshToken,
+      userId,
+      expiresAt: new Date(Date.now() + AuthLogic.parseExpiresIn(expiresIn)),
+    };
+    await this.authRepository.createRefreshToken(createData);
+    return refreshToken;
   }
 
   async refreshAccessToken(
     refreshToken: string,
   ): Promise<RefreshTokenResponse> {
     this.jwtService.verify(refreshToken);
-
-    const token = await this.prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
-      include: { user: true },
-    });
-
-    if (!token) {
-      throw new UnAuthenticateRpcException('Invalid refresh token');
-    }
-    if (token.expiresAt < new Date()) {
-      throw new UnAuthenticateRpcException('Refresh token has been expired');
-    }
-    const payload: UserPayload = {
-      sub: token.user.id,
-      email: token.user.email,
-      username: token.user.username,
-      role: token.user.role,
-    };
+    const token: Prisma.RefreshTokenGetPayload<{
+      include: { user: true };
+    }> | null = await this.authRepository.findRefreshToken(refreshToken);
+    AuthValidation.ensureValidCredential(token);
+    AuthValidation.ensureCredentialNotExpired(token!.expiresAt);
+    const payload: UserPayload = AuthLogic.createUserPayload(
+      token!.user.id,
+      token!.user.email,
+      token!.user.username,
+      token!.user.role,
+    );
     const newAccessToken: string = this.jwtService.sign(payload);
-
     return { accessToken: newAccessToken } as RefreshTokenResponse;
   }
 
   async logout(userId: string, refreshToken: string) {
-    await this.prisma.refreshToken.deleteMany({
-      where: {
-        userId,
-        token: refreshToken,
-      },
-    });
-
+    await this.authRepository.deleteRefreshToken(userId, refreshToken);
     return { message: 'Logged out successfully' } as LogoutResponse;
   }
 
   public validateToken(token: string) {
     try {
-      const payload = this.jwtService.verify(token);
+      const payload: UserPayload = this.jwtService.verify(token);
       return payload;
     } catch {
       throw new UnAuthenticateRpcException('Invalid token');
@@ -190,20 +135,13 @@ export class AuthService {
   }
 
   public async validateUserById(userId: string): Promise<ValidateUserResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId, isActive: true },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        role: true,
-        createdAt: true,
-      },
-    });
+    const where: Prisma.UserWhereUniqueInput =
+      AuthLogic.userWhereUniqueId(userId);
+    const select: Prisma.UserSelect = AuthLogic.userSelectWithoutPassword();
+    const user = await this.authRepository.findUniqueUser(where, select);
     if (!user) {
       return { valid: false, user: undefined } as ValidateUserResponse;
     }
-
     return {
       valid: true,
       user: {

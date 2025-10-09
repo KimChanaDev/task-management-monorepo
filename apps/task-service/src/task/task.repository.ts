@@ -1,10 +1,6 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { TaskModel } from './interfaces/task.interfaces';
-import {
-  InternalRpcException,
-  NotFoundRpcException,
-} from '@repo/grpc/exception';
+import { InternalRpcException } from '@repo/grpc/exception';
 import { CreateTaskRequest } from '@repo/grpc/task';
 import {
   TaskPriority,
@@ -17,18 +13,15 @@ export class TaskRepository {
   private readonly logger = new Logger(TaskRepository.name);
   constructor(private readonly prisma: PrismaService) {}
 
-  async findTaskById(id: string): Promise<TaskModel> {
-    let task: TaskModel | null;
+  async findTaskById(id: string): Promise<Prisma.TaskGetPayload<any> | null> {
     try {
-      task = await this.prisma.task.findUnique({ where: { id } });
+      const task: Prisma.TaskGetPayload<any> | null =
+        await this.prisma.task.findUnique({ where: { id } });
+      return task;
     } catch (error) {
       this.logger.error(`Failed to get task ${id}: ${error.message}`);
       throw new InternalRpcException(`Failed to get task: ${error.message}`);
     }
-    if (!task) {
-      throw new NotFoundRpcException(`Task with ID ${id} not found`);
-    }
-    return task;
   }
 
   async findTasksByPage(
@@ -36,7 +29,7 @@ export class TaskRepository {
     limit: number,
     where: Prisma.TaskWhereInput,
     orderBy: Prisma.Enumerable<Prisma.TaskOrderByWithRelationInput>,
-  ): Promise<[TaskModel[], number]> {
+  ): Promise<[Prisma.TaskGetPayload<any>[], number]> {
     const skip = (page - 1) * limit;
     try {
       return await Promise.all([
@@ -66,24 +59,26 @@ export class TaskRepository {
   async updateTask(
     id: string,
     updateData: Prisma.TaskUpdateInput,
-  ): Promise<TaskModel> {
-    let updated: TaskModel;
+  ): Promise<Prisma.TaskGetPayload<any>> {
     try {
-      updated = await this.prisma.task.update({
-        where: { id },
-        data: updateData,
-      });
+      const updated: Prisma.TaskGetPayload<any> = await this.prisma.task.update(
+        {
+          where: { id },
+          data: updateData,
+        },
+      );
+      return updated;
     } catch (error) {
       this.logger.error(`Failed to update task ${id}: ${error.message}`);
       throw new InternalRpcException(`Failed to update task: ${error.message}`);
     }
-    return updated;
   }
 
-  async createTask(data: CreateTaskRequest): Promise<TaskModel> {
-    let task: TaskModel;
+  async createTask(
+    data: CreateTaskRequest,
+  ): Promise<Prisma.TaskGetPayload<any>> {
     try {
-      task = await this.prisma.task.create({
+      const task: Prisma.TaskGetPayload<any> = await this.prisma.task.create({
         data: {
           title: data.title,
           description: data.description,
@@ -94,10 +89,10 @@ export class TaskRepository {
           assignedTo: data.assignedTo || null,
         },
       });
+      return task;
     } catch (error) {
       this.logger.error(`Failed to create task: ${error.message}`);
       throw new InternalRpcException(`Failed to create task: ${error.message}`);
     }
-    return task;
   }
 }

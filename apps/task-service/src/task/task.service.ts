@@ -4,7 +4,6 @@ import {
   TaskPriority,
   Prisma,
 } from '@prisma/client/task-service/index.js';
-import { TaskModel } from './interfaces/task.interfaces';
 import {
   AssignTaskRequest,
   CreateTaskRequest,
@@ -18,7 +17,8 @@ import {
 } from '@repo/grpc/task';
 import { TaskLogic } from './task.logic';
 import { TaskRepository } from './task.repository';
-import { AuthExternalService } from './auth.external-service';
+import { AuthExternalService } from './external-services/auth.external-service';
+import { TaskValidation } from './task.validation';
 
 @Injectable()
 export class TaskService {
@@ -31,24 +31,27 @@ export class TaskService {
 
   async createTask(data: CreateTaskRequest): Promise<TaskResponse> {
     this.logger.log(`Creating task: ${data.title}`);
-    TaskLogic.validateCreateTaskRequest(data);
+    TaskValidation.ensureCreateTaskRequest(data);
     await this.authExternalService.validateUserExists(data.createdBy);
     if (data.assignedTo) {
       await this.authExternalService.validateUserExists(data.assignedTo);
     }
-    const task: TaskModel = await this.taskRepository.createTask(data);
+    const task: Prisma.TaskGetPayload<any> =
+      await this.taskRepository.createTask(data);
     return { task: TaskLogic.formatTask(task) } as TaskResponse;
   }
 
   async getTask(id: string): Promise<TaskResponse> {
     this.logger.log(`Getting task: ${id}`);
-    TaskLogic.validateGetTaskRequest(id);
-    const task = await this.taskRepository.findTaskById(id);
-    return { task: TaskLogic.formatTask(task) } as TaskResponse;
+    TaskValidation.ensureGetTaskRequest(id);
+    const task: Prisma.TaskGetPayload<any> | null =
+      await this.taskRepository.findTaskById(id);
+    TaskValidation.ensureTaskFound(task, id);
+    return { task: TaskLogic.formatTask(task!) } as TaskResponse;
   }
 
   async getTasks(params: GetTasksRequest): Promise<TasksResponse> {
-    TaskLogic.validateGetTasksRequest(params);
+    TaskValidation.ensureGetTasksRequest(params);
     const { page = 1, limit = 10, status, priority } = params;
     const where: Prisma.TaskWhereInput = {};
     if (status) where.status = status as TaskStatus;
@@ -69,8 +72,10 @@ export class TaskService {
 
   async updateTask(data: UpdateTaskRequest): Promise<TaskResponse> {
     this.logger.log(`Updating task: ${data.id}`);
-    TaskLogic.validateUpdateTaskRequest(data);
-    await this.taskRepository.findTaskById(data.id);
+    TaskValidation.ensureUpdateTaskRequest(data);
+    const task: Prisma.TaskGetPayload<any> | null =
+      await this.taskRepository.findTaskById(data.id);
+    TaskValidation.ensureTaskFound(task, data.id);
     if (data.assignedTo) {
       await this.authExternalService.validateUserExists(data.assignedTo);
     }
@@ -88,14 +93,18 @@ export class TaskService {
 
   async deleteTask(id: string): Promise<DeleteTaskResponse> {
     this.logger.log(`Deleting task: ${id}`);
-    await this.taskRepository.findTaskById(id);
+    const task: Prisma.TaskGetPayload<any> | null =
+      await this.taskRepository.findTaskById(id);
+    TaskValidation.ensureTaskFound(task, id);
     await this.taskRepository.deleteTaskById(id);
     return { message: 'Task deleted successfully' } as DeleteTaskResponse;
   }
 
   async assignTask(data: AssignTaskRequest): Promise<TaskResponse> {
     this.logger.log(`Assigning task: ${data.id} to user: ${data.assignedTo}`);
-    await this.taskRepository.findTaskById(data.id);
+    const task: Prisma.TaskGetPayload<any> | null =
+      await this.taskRepository.findTaskById(data.id);
+    TaskValidation.ensureTaskFound(task, data.id);
     await this.authExternalService.validateUserExists(data.assignedTo);
     const updateData: Prisma.TaskUpdateInput = { assignedTo: data.assignedTo };
     const updated = await this.taskRepository.updateTask(data.id, updateData);
@@ -104,8 +113,10 @@ export class TaskService {
 
   async updateTaskStatus(data: UpdateTaskStatusRequest): Promise<TaskResponse> {
     this.logger.log(`Updating task status: ${data.id} to ${data.status}`);
-    TaskLogic.validateUpdateStatusRequest(data);
-    await this.taskRepository.findTaskById(data.id);
+    TaskValidation.ensureUpdateStatusRequest(data);
+    const task: Prisma.TaskGetPayload<any> | null =
+      await this.taskRepository.findTaskById(data.id);
+    TaskValidation.ensureTaskFound(task, data.id);
     const updateData: Prisma.TaskUpdateInput = {
       status: data.status as TaskStatus,
     };
@@ -114,7 +125,7 @@ export class TaskService {
   }
 
   async getUserTasks(params: GetUserTasksRequest): Promise<TasksResponse> {
-    TaskLogic.validateGetUserTasksRequest(params);
+    TaskValidation.ensureGetUserTasksRequest(params);
     const { userId, page = 1, limit = 10, status } = params;
     await this.authExternalService.validateUserExists(userId);
     const where: Prisma.TaskWhereInput = {

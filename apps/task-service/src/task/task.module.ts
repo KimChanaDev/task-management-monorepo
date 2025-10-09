@@ -7,7 +7,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { ProtoPackage } from '@repo/grpc/package';
 import { ConfigService } from '@nestjs/config';
 import { TaskRepository } from './task.repository';
-import { AuthExternalService } from './auth.external-service';
+import { AuthExternalService } from './external-services/auth.external-service';
 
 @Module({
   imports: [
