@@ -18,7 +18,9 @@ import { AuthRepository } from './auth.repository';
       useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.getOrThrow<string>('JWT_EXPIRES_IN'),
+          expiresIn: configService.getOrThrow<string>(
+            'ACCESS_TOKEN_EXPIRES_IN',
+          ),
         },
       }),
     }),

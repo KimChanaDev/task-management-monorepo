@@ -1,8 +1,9 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client/auth-service/index.js';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InternalRpcException } from '@repo/grpc/exception';
 
+@Injectable()
 export class AuthRepository {
   private readonly logger = new Logger(AuthRepository.name);
   constructor(private readonly prisma: PrismaService) {}

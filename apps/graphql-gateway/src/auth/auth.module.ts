@@ -1,17 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'path';
-import { TaskController } from './task.controller';
-import { TaskService } from './task.service';
-import { PrismaModule } from '../prisma/prisma.module';
+import { AuthResolver } from './auth.resolver';
+import { AuthService } from './auth.service';
 import { ProtoPackage } from '@repo/grpc/package';
-import { ConfigService } from '@nestjs/config';
-import { TaskRepository } from './task.repository';
-import { AuthExternalService } from './external-services/auth.external-service';
 
 @Module({
   imports: [
-    PrismaModule,
+    ConfigModule.forRoot({ isGlobal: true }),
     ClientsModule.registerAsync([
       {
         name: ProtoPackage.AUTH,
@@ -30,8 +27,7 @@ import { AuthExternalService } from './external-services/auth.external-service';
       },
     ]),
   ],
-  controllers: [TaskController],
-  providers: [TaskService, TaskRepository, AuthExternalService],
-  exports: [TaskService, TaskRepository, AuthExternalService],
+  providers: [AuthResolver, AuthService],
+  exports: [AuthService],
 })
-export class TaskModule {}
+export class AuthModule {}

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -13,10 +13,14 @@ import { ValidatedUserModel } from './interfaces/validated-user.interface';
 import { UserPayload } from './interfaces/user-payload.interface';
 import { ConfigService } from '@nestjs/config';
 import { AuthLogic } from './auth.logic';
-import { UnAuthenticateRpcException } from '@repo/grpc/exception';
+import {
+  DeadlineExceededRpcException,
+  UnAuthenticateRpcException,
+} from '@repo/grpc/exception';
 import { Prisma } from '@prisma/client/auth-service/index.js';
 import { AuthRepository } from './auth.repository';
 import { AuthValidation } from './auth.validation';
+import { Utility } from '@repo/common/utility';
 
 @Injectable()
 export class AuthService {
@@ -95,7 +99,7 @@ export class AuthService {
     const createData: Prisma.RefreshTokenUncheckedCreateInput = {
       token: refreshToken,
       userId,
-      expiresAt: new Date(Date.now() + AuthLogic.parseExpiresIn(expiresIn)),
+      expiresAt: new Date(Date.now() + Utility.parseExpiresIn(expiresIn)),
     };
     await this.authRepository.createRefreshToken(createData);
     return refreshToken;
@@ -104,7 +108,13 @@ export class AuthService {
   async refreshAccessToken(
     refreshToken: string,
   ): Promise<RefreshTokenResponse> {
-    this.jwtService.verify(refreshToken);
+    try {
+      this.jwtService.verify(refreshToken);
+    } catch (error) {
+      throw new UnAuthenticateRpcException(
+        `Invalid refresh token: ${error.message}`,
+      );
+    }
     const token: Prisma.RefreshTokenGetPayload<{
       include: { user: true };
     }> | null = await this.authRepository.findRefreshToken(refreshToken);
@@ -129,8 +139,12 @@ export class AuthService {
     try {
       const payload: UserPayload = this.jwtService.verify(token);
       return payload;
-    } catch {
-      throw new UnAuthenticateRpcException('Invalid token');
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw new DeadlineExceededRpcException('Token has expired');
+      } else {
+        throw new UnAuthenticateRpcException(`Invalid token: ${error.message}`);
+      }
     }
   }
 
