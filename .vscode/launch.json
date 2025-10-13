@@ -66,6 +66,18 @@
         "group": "microservices",
         "order": 1
       }
+    },
+        {
+      "name": "Debug Authen Microservices",
+      "configurations": [
+        "Debug Auth App",
+        "Debug Graphql Gateway App"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "group": "microservices",
+        "order": 1
+      }
     }
   ]
 }

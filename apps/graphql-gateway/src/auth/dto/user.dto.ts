@@ -24,10 +24,10 @@ export class UserDto {
 export class AuthDto {
   @Field(() => UserDto)
   user: UserDto;
+}
 
+@ObjectType()
+export class MessageDto {
   @Field()
-  accessToken: string;
-
-  @Field()
-  refreshToken: string;
+  message: string;
 }

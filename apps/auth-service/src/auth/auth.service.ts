@@ -137,14 +137,6 @@ export class AuthService {
     );
   }
 
-  private async removeRefreshTokenFromRedis(
-    refreshToken: string,
-    userId: string,
-  ): Promise<void> {
-    await this.redisService.deleteRefreshToken(refreshToken);
-    await this.redisService.decrementActiveSessions(userId);
-  }
-
   async refreshAccessToken(
     refreshToken: string,
   ): Promise<RefreshTokenResponse> {
@@ -211,8 +203,8 @@ export class AuthService {
   }
 
   async logout(userId: string, refreshToken: string) {
-    await this.authRepository.deleteRefreshToken(userId, refreshToken);
-    await this.removeRefreshTokenFromRedis(refreshToken, userId);
+    await this.revokeOldRefreshToken(refreshToken);
+    await this.redisService.decrementActiveSessions(userId);
     return { message: 'Logged out successfully' } as LogoutResponse;
   }
 

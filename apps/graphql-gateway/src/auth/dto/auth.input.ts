@@ -39,10 +39,3 @@ export class LoginInput {
   @IsString()
   password: string;
 }
-
-@InputType()
-export class RefreshAccessTokenInput {
-  @Field()
-  @IsString()
-  refreshToken: string;
-}

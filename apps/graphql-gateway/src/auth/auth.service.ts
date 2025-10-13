@@ -9,6 +9,8 @@ import {
   AuthServiceClient,
   LoginRequest,
   LoginResponse,
+  LogoutRequest,
+  LogoutResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
   RegisterRequest,
@@ -20,7 +22,7 @@ import {
 } from '@repo/grpc/auth';
 import { ProtoPackage } from '@repo/grpc/package';
 import { firstValueFrom } from 'rxjs';
-import { AuthDto, UserDto } from './dto/user.dto';
+import { AuthDto, MessageDto, UserDto } from './dto/user.dto';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Utility } from '@repo/common/utility';
@@ -99,7 +101,17 @@ export class AuthService implements OnModuleInit {
       this.authExternalService.login(request),
     );
     this.setCookies(response, result.accessToken, result.refreshToken);
-    return result as AuthDto;
+    return { user: result.user } as AuthDto;
+  }
+
+  async logout(userId: string, refreshToken: string, response: Response) {
+    const request: LogoutRequest = { userId, refreshToken };
+    const result: LogoutResponse = await firstValueFrom(
+      this.authExternalService.logout(request),
+    );
+    response.clearCookie('AccessToken');
+    response.clearCookie('RefreshToken');
+    return result as MessageDto;
   }
 
   async validateToken(token: string): Promise<ValidateTokenResponse> {
@@ -118,7 +130,7 @@ export class AuthService implements OnModuleInit {
       this.authExternalService.refreshToken(request),
     );
     this.setCookies(response, result.accessToken, result.refreshToken);
-    return result as AuthDto;
+    return { message: 'Token refreshed successfully' } as MessageDto;
   }
 
   async getUser(userId: string): Promise<ValidateUserResponse> {

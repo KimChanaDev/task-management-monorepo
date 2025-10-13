@@ -1,12 +1,8 @@
 import { Resolver, Query, Mutation, Args, Context } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UserDto, AuthDto } from './dto/user.dto';
-import {
-  RegisterInput,
-  LoginInput,
-  RefreshAccessTokenInput,
-} from './dto/auth.input';
+import { UserDto, AuthDto, MessageDto } from './dto/user.dto';
+import { RegisterInput, LoginInput } from './dto/auth.input';
 import { GqlAuthGuard } from './guards/gql-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { ValidateUserResponse, type TokenPayload } from '@repo/grpc/auth';
@@ -37,15 +33,30 @@ export class AuthResolver {
     );
   }
 
-  @Mutation(() => AuthDto)
+  @Mutation(() => MessageDto)
   async refreshAccessToken(
-    @Args('refreshToken') input: RefreshAccessTokenInput,
     @Context() context: GqlContext,
-  ): Promise<AuthDto> {
-    return await this.authService.refreshAccessToken(
-      input.refreshToken,
-      context.res,
-    );
+  ): Promise<MessageDto> {
+    const refreshToken = context.req.cookies?.RefreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('No token provided');
+    }
+    return await this.authService.refreshAccessToken(refreshToken, context.res);
+  }
+
+  @Mutation(() => MessageDto)
+  @UseGuards(GqlAuthGuard)
+  async logout(
+    @CurrentUser() user: TokenPayload,
+    @Context() context: GqlContext,
+  ): Promise<MessageDto> {
+    const refreshToken = context.req.cookies?.RefreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('No token provided');
+    }
+    return await this.authService.logout(user.sub, refreshToken, context.res);
   }
 
   @Query(() => UserDto)
