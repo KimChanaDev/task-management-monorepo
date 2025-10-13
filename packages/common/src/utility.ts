@@ -12,7 +12,7 @@ export class Utility {
     const match = expiresIn.match(/^(\d+)([smhdMy])$/);
     if (!match) {
       throw new Error(
-        "Invalid expiresIn format. Use formats like: 30d, 24h, 1M, 1y"
+        "Invalid expiresIn format. Use formats like: 30d, 24h, 1M, 1y",
       );
     }
 

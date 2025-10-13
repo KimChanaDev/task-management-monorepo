@@ -85,7 +85,9 @@ export interface AuthServiceClient {
 
   login(request: LoginRequest): Observable<LoginResponse>;
 
-  validateToken(request: ValidateTokenRequest): Observable<ValidateTokenResponse>;
+  validateToken(
+    request: ValidateTokenRequest,
+  ): Observable<ValidateTokenResponse>;
 
   refreshToken(request: RefreshTokenRequest): Observable<RefreshTokenResponse>;
 
@@ -95,36 +97,75 @@ export interface AuthServiceClient {
 }
 
 export interface AuthServiceController {
-  register(request: RegisterRequest): Promise<RegisterResponse> | Observable<RegisterResponse> | RegisterResponse;
+  register(
+    request: RegisterRequest,
+  ):
+    | Promise<RegisterResponse>
+    | Observable<RegisterResponse>
+    | RegisterResponse;
 
-  login(request: LoginRequest): Promise<LoginResponse> | Observable<LoginResponse> | LoginResponse;
+  login(
+    request: LoginRequest,
+  ): Promise<LoginResponse> | Observable<LoginResponse> | LoginResponse;
 
   validateToken(
     request: ValidateTokenRequest,
-  ): Promise<ValidateTokenResponse> | Observable<ValidateTokenResponse> | ValidateTokenResponse;
+  ):
+    | Promise<ValidateTokenResponse>
+    | Observable<ValidateTokenResponse>
+    | ValidateTokenResponse;
 
   refreshToken(
     request: RefreshTokenRequest,
-  ): Promise<RefreshTokenResponse> | Observable<RefreshTokenResponse> | RefreshTokenResponse;
+  ):
+    | Promise<RefreshTokenResponse>
+    | Observable<RefreshTokenResponse>
+    | RefreshTokenResponse;
 
-  logout(request: LogoutRequest): Promise<LogoutResponse> | Observable<LogoutResponse> | LogoutResponse;
+  logout(
+    request: LogoutRequest,
+  ): Promise<LogoutResponse> | Observable<LogoutResponse> | LogoutResponse;
 
   validateUser(
     request: ValidateUserRequest,
-  ): Promise<ValidateUserResponse> | Observable<ValidateUserResponse> | ValidateUserResponse;
+  ):
+    | Promise<ValidateUserResponse>
+    | Observable<ValidateUserResponse>
+    | ValidateUserResponse;
 }
 
 export function AuthServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["register", "login", "validateToken", "refreshToken", "logout", "validateUser"];
+    const grpcMethods: string[] = [
+      "register",
+      "login",
+      "validateToken",
+      "refreshToken",
+      "logout",
+      "validateUser",
+    ];
     for (const method of grpcMethods) {
-      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcMethod("AuthService", method)(constructor.prototype[method], method, descriptor);
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(
+        constructor.prototype,
+        method,
+      );
+      GrpcMethod("AuthService", method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
-      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcStreamMethod("AuthService", method)(constructor.prototype[method], method, descriptor);
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(
+        constructor.prototype,
+        method,
+      );
+      GrpcStreamMethod("AuthService", method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
     }
   };
 }
