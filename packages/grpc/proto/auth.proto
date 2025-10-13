@@ -24,6 +24,10 @@ message RegisterResponse {
 message LoginRequest {
   string email = 1;
   string password = 2;
+  optional string ipAddress = 3;
+  optional string userAgent = 4;
+  optional string deviceId = 5;
+  optional string deviceName = 6;
 }
 
 message LoginResponse {
@@ -43,6 +47,10 @@ message ValidateTokenResponse {
 
 message RefreshTokenRequest {
   string refreshToken = 1;
+  optional string ipAddress = 2;
+  optional string userAgent = 3;
+  optional string deviceId = 4;
+  optional string deviceName = 5;
 }
 
 message RefreshTokenResponse {

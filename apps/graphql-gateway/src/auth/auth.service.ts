@@ -26,6 +26,7 @@ import { AuthDto, MessageDto, UserDto } from './dto/user.dto';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Utility } from '@repo/common/utility';
+import { ClientMetadata } from '@repo/common/interfaces';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -95,8 +96,16 @@ export class AuthService implements OnModuleInit {
     email: string,
     password: string,
     response: Response,
+    metadata: ClientMetadata,
   ): Promise<AuthDto> {
-    const request: LoginRequest = { email, password };
+    const request: LoginRequest = {
+      email,
+      password,
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+      deviceId: metadata.deviceId,
+      deviceName: metadata.deviceName,
+    };
     const result: LoginResponse = await firstValueFrom(
       this.authExternalService.login(request),
     );
@@ -124,8 +133,18 @@ export class AuthService implements OnModuleInit {
     return result;
   }
 
-  async refreshAccessToken(refreshToken: string, response: Response) {
-    const request: RefreshTokenRequest = { refreshToken };
+  async refreshAccessToken(
+    refreshToken: string,
+    response: Response,
+    metadata: ClientMetadata,
+  ) {
+    const request: RefreshTokenRequest = {
+      refreshToken,
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+      deviceId: metadata.deviceId,
+      deviceName: metadata.deviceName,
+    };
     const result: RefreshTokenResponse = await firstValueFrom(
       this.authExternalService.refreshToken(request),
     );

@@ -7,6 +7,7 @@ import { GqlAuthGuard } from './guards/gql-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { ValidateUserResponse, type TokenPayload } from '@repo/grpc/auth';
 import { type GqlContext } from 'src/interfaces/gql-context.interface';
+import { AuthLogic } from './auth.logic';
 
 @Resolver()
 export class AuthResolver {
@@ -30,6 +31,7 @@ export class AuthResolver {
       input.email,
       input.password,
       context.res,
+      AuthLogic.getClientDetails(context.req),
     );
   }
 
@@ -42,7 +44,11 @@ export class AuthResolver {
     if (!refreshToken) {
       throw new UnauthorizedException('No token provided');
     }
-    return await this.authService.refreshAccessToken(refreshToken, context.res);
+    return await this.authService.refreshAccessToken(
+      refreshToken,
+      context.res,
+      AuthLogic.getClientDetails(context.req),
+    );
   }
 
   @Mutation(() => MessageDto)

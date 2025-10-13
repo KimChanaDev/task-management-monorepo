@@ -21,6 +21,10 @@ export interface RegisterResponse {
 export interface LoginRequest {
   email: string;
   password: string;
+  ipAddress?: string | undefined;
+  userAgent?: string | undefined;
+  deviceId?: string | undefined;
+  deviceName?: string | undefined;
 }
 
 export interface LoginResponse {
@@ -40,6 +44,10 @@ export interface ValidateTokenResponse {
 
 export interface RefreshTokenRequest {
   refreshToken: string;
+  ipAddress?: string | undefined;
+  userAgent?: string | undefined;
+  deviceId?: string | undefined;
+  deviceName?: string | undefined;
 }
 
 export interface RefreshTokenResponse {

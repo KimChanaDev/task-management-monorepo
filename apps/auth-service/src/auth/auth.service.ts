@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../prisma/prisma.service';
 import {
   LoginResponse,
   LogoutResponse,
@@ -22,11 +21,11 @@ import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
 import { RedisService } from '../redis/redis.service';
 import { UserRedisMetadata } from './interfaces/user-redis-metadata.interface';
+import { ClientMetadata } from '@repo/common/interfaces';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly authRepository: AuthRepository,
@@ -74,7 +73,10 @@ export class AuthService {
     } as RegisterResponse;
   }
 
-  public async login(user: ValidatedUserModel): Promise<LoginResponse> {
+  public async login(
+    user: ValidatedUserModel,
+    metadata: ClientMetadata,
+  ): Promise<LoginResponse> {
     const payload: UserPayload = AuthLogic.createUserPayload(
       user.id,
       user.email,
@@ -82,7 +84,7 @@ export class AuthService {
       user.role,
     );
     const accessToken: string = this.jwtService.sign(payload);
-    const refreshToken: string = await this.createRefreshToken(user);
+    const refreshToken: string = await this.createRefreshToken(user, metadata);
     await this.redisService.incrementActiveSessions(user.id);
     return {
       accessToken,
@@ -91,7 +93,10 @@ export class AuthService {
     } as LoginResponse;
   }
 
-  private async createRefreshToken(user: ValidatedUserModel): Promise<string> {
+  private async createRefreshToken(
+    user: ValidatedUserModel,
+    metadata: ClientMetadata,
+  ): Promise<string> {
     const expiresIn: string = this.config.getOrThrow<string>(
       'REFRESH_TOKEN_EXPIRES_IN',
     );
@@ -100,10 +105,19 @@ export class AuthService {
       .update(uuid)
       .digest('hex');
     const expiresAt = new Date(Date.now() + Utility.parseExpiresIn(expiresIn));
+
+    // Generate tokenFamily for token rotation tracking
+    const tokenFamily = randomUUID();
+
     const createData: Prisma.RefreshTokenUncheckedCreateInput = {
       token: refreshToken,
       userId: user.id,
       expiresAt,
+      tokenFamily,
+      deviceId: metadata.deviceId,
+      deviceName: metadata.deviceName,
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
     };
     await this.authRepository.createRefreshToken(createData);
     await this.storeRefreshTokenInRedis(
@@ -139,16 +153,20 @@ export class AuthService {
 
   async refreshAccessToken(
     refreshToken: string,
+    metadata: ClientMetadata,
   ): Promise<RefreshTokenResponse> {
     const data = await this.getRefreshTokenData(refreshToken);
     await this.revokeOldRefreshToken(refreshToken);
-    const newRefreshToken = await this.createRefreshToken({
-      id: data.userId,
-      email: data.email,
-      username: data.username,
-      role: data.role as $Enums.Role,
-      createdAt: data.createdAt,
-    } as ValidatedUserModel);
+    const newRefreshToken = await this.createRefreshToken(
+      {
+        id: data.userId,
+        email: data.email,
+        username: data.username,
+        role: data.role as $Enums.Role,
+        createdAt: data.createdAt,
+      } as ValidatedUserModel,
+      metadata,
+    );
     const newAccessToken: string = this.jwtService.sign(
       AuthLogic.createUserPayload(
         data.userId,

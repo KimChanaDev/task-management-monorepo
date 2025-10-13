@@ -16,6 +16,10 @@
     "./utility": {
       "types": "./src/utility.ts",
       "default": "./dist/src/utility.js"
+    },
+    "./interfaces": {
+      "types": "./src/interfaces/client-metadata.interface.ts",
+      "default": "./dist/src/interfaces/client-metadata.interface.js"
     }
   }
 }

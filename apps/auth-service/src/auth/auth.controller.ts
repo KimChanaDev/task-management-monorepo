@@ -17,6 +17,7 @@ import {
   type ValidateUserResponse,
 } from '@repo/grpc/auth';
 import { ValidatedUserModel } from './interfaces/validated-user.interface';
+import { ClientMetadata } from '@repo/common/interfaces';
 
 @Controller()
 @AuthServiceControllerMethods()
@@ -36,7 +37,8 @@ export class AuthController implements AuthServiceController {
       data.email,
       data.password,
     );
-    return await this.authService.login(user);
+    const metadata: ClientMetadata = { ...data };
+    return await this.authService.login(user, metadata);
   }
 
   validateToken(data: ValidateTokenRequest): ValidateTokenResponse {
@@ -45,7 +47,11 @@ export class AuthController implements AuthServiceController {
   }
 
   async refreshToken(data: RefreshTokenRequest): Promise<RefreshTokenResponse> {
-    return await this.authService.refreshAccessToken(data.refreshToken);
+    const metadata: ClientMetadata = { ...data };
+    return await this.authService.refreshAccessToken(
+      data.refreshToken,
+      metadata,
+    );
   }
 
   async logout(data: LogoutRequest): Promise<LogoutResponse> {
