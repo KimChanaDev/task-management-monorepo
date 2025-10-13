@@ -153,4 +153,44 @@ export class AuthRepository {
       );
     }
   }
+
+  async findRefreshToken(
+    refreshToken: string,
+  ): Promise<Prisma.RefreshTokenGetPayload<object> | null> {
+    try {
+      return await this.prisma.refreshToken.findUnique({
+        where: {
+          token: refreshToken,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to find refresh token: ${error.message}`);
+      throw new InternalRpcException(
+        `Failed to find refresh token: ${error.message}`,
+      );
+    }
+  }
+
+  async revokeTokenFamily(tokenFamily: string): Promise<void> {
+    try {
+      await this.prisma.refreshToken.updateMany({
+        where: {
+          tokenFamily,
+          isRevoked: false,
+        },
+        data: {
+          isRevoked: true,
+          revokedAt: new Date(),
+        },
+      });
+      this.logger.warn(
+        `Token family ${tokenFamily} has been revoked due to potential token reuse`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to revoke token family: ${error.message}`);
+      throw new InternalRpcException(
+        `Failed to revoke token family: ${error.message}`,
+      );
+    }
+  }
 }

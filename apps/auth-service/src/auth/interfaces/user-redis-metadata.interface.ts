@@ -6,4 +6,5 @@ export interface UserRedisMetadata {
   role: $Enums.Role;
   createdAt: string;
   expiresAt: string;
+  tokenFamily: string;
 }

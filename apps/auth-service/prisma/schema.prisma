@@ -30,7 +30,7 @@ model User {
 model RefreshToken {
     id          String    @id @default(uuid())
     token       String    @unique
-    tokenFamily String?
+    tokenFamily String
     userId      String
     deviceId    String?
     deviceName  String?

@@ -96,6 +96,7 @@ export class AuthService {
   private async createRefreshToken(
     user: ValidatedUserModel,
     metadata: ClientMetadata,
+    existingTokenFamily?: string,
   ): Promise<string> {
     const expiresIn: string = this.config.getOrThrow<string>(
       'REFRESH_TOKEN_EXPIRES_IN',
@@ -106,8 +107,7 @@ export class AuthService {
       .digest('hex');
     const expiresAt = new Date(Date.now() + Utility.parseExpiresIn(expiresIn));
 
-    // Generate tokenFamily for token rotation tracking
-    const tokenFamily = randomUUID();
+    const tokenFamily = existingTokenFamily || randomUUID();
 
     const createData: Prisma.RefreshTokenUncheckedCreateInput = {
       token: refreshToken,
@@ -122,6 +122,7 @@ export class AuthService {
     await this.authRepository.createRefreshToken(createData);
     await this.storeRefreshTokenInRedis(
       refreshToken,
+      tokenFamily,
       user,
       expiresAt,
       expiresIn,
@@ -131,6 +132,7 @@ export class AuthService {
 
   private async storeRefreshTokenInRedis(
     refreshToken: string,
+    tokenFamily: string,
     user: ValidatedUserModel,
     expiresAt: Date,
     expiresIn: string,
@@ -143,6 +145,7 @@ export class AuthService {
       role: user.role,
       createdAt: user.createdAt,
       expiresAt: expiresAt.toISOString(),
+      tokenFamily,
     };
     await this.redisService.setRefreshTokenWithMetadata(
       refreshToken,
@@ -155,30 +158,52 @@ export class AuthService {
     refreshToken: string,
     metadata: ClientMetadata,
   ): Promise<RefreshTokenResponse> {
-    const data = await this.getRefreshTokenData(refreshToken);
+    await this.detectTokenReuseAndRevokeFamilyIfNeeded(refreshToken);
+    const tokenData = await this.getRefreshTokenData(refreshToken);
     await this.revokeOldRefreshToken(refreshToken);
     const newRefreshToken = await this.createRefreshToken(
       {
-        id: data.userId,
-        email: data.email,
-        username: data.username,
-        role: data.role as $Enums.Role,
-        createdAt: data.createdAt,
+        id: tokenData.userId,
+        email: tokenData.email,
+        username: tokenData.username,
+        role: tokenData.role as $Enums.Role,
+        createdAt: tokenData.createdAt,
       } as ValidatedUserModel,
       metadata,
+      tokenData.tokenFamily,
     );
+
     const newAccessToken: string = this.jwtService.sign(
       AuthLogic.createUserPayload(
-        data.userId,
-        data.email,
-        data.username,
-        data.role as $Enums.Role,
+        tokenData.userId,
+        tokenData.email,
+        tokenData.username,
+        tokenData.role as $Enums.Role,
       ),
     );
+
     return {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     } as RefreshTokenResponse;
+  }
+
+  private async detectTokenReuseAndRevokeFamilyIfNeeded(
+    refreshToken: string,
+  ): Promise<void> {
+    const tokenRecord =
+      await this.authRepository.findRefreshToken(refreshToken);
+
+    // If token doesn't exist, it will be caught in getRefreshTokenData
+    if (!tokenRecord) {
+      return;
+    }
+
+    if (tokenRecord.isRevoked) {
+      await this.authRepository.revokeTokenFamily(tokenRecord.tokenFamily);
+      await this.redisService.decrementActiveSessions(tokenRecord.userId);
+      AuthValidation.ensureTokenNotRevoked(tokenRecord.isRevoked);
+    }
   }
 
   private async getRefreshTokenData(refreshToken: string) {
@@ -190,6 +215,7 @@ export class AuthService {
     let username: string;
     let role: string;
     let createdAt: string;
+    let tokenFamily: string;
 
     if (cachedData) {
       const expiresAt: Date = new Date(cachedData.expiresAt);
@@ -199,6 +225,7 @@ export class AuthService {
       username = cachedData.username;
       createdAt = cachedData.createdAt;
       role = cachedData.role;
+      tokenFamily = cachedData.tokenFamily;
     } else {
       const tokenData: Prisma.RefreshTokenGetPayload<{
         include: { user: true };
@@ -211,8 +238,9 @@ export class AuthService {
       username = tokenData!.user.username;
       createdAt = tokenData!.user.createdAt.toISOString();
       role = tokenData!.user.role;
+      tokenFamily = tokenData!.tokenFamily;
     }
-    return { userId, email, username, role, createdAt };
+    return { userId, email, username, role, createdAt, tokenFamily };
   }
 
   private async revokeOldRefreshToken(refreshToken: string): Promise<void> {

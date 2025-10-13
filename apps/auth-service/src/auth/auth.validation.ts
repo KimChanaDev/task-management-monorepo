@@ -24,4 +24,11 @@ export class AuthValidation {
       throw new AlreadyExistsRpcException('Email or username already exists');
     }
   }
+  public static ensureTokenNotRevoked(isRevoked: boolean) {
+    if (isRevoked) {
+      throw new UnAuthenticateRpcException(
+        'Token has been revoked. Possible token reuse detected.',
+      );
+    }
+  }
 }
