@@ -8,6 +8,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthRepository } from './auth.repository';
+import { RedisService } from '../redis/redis.service';
+import { SessionController } from './session.controller';
 
 @Module({
   imports: [
@@ -26,8 +28,14 @@ import { AuthRepository } from './auth.repository';
     }),
     PrismaModule,
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy, AuthRepository],
+  controllers: [AuthController, SessionController],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LocalStrategy,
+    AuthRepository,
+    RedisService,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

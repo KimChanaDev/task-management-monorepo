@@ -21,6 +21,9 @@ import { Prisma } from '@prisma/client/auth-service/index.js';
 import { AuthRepository } from './auth.repository';
 import { AuthValidation } from './auth.validation';
 import { Utility } from '@repo/common/utility';
+import { randomUUID } from 'crypto';
+import { createHash } from 'crypto';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +32,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly authRepository: AuthRepository,
+    private readonly redisService: RedisService,
   ) {}
   public async validateUser(
     email: string,
@@ -92,17 +96,36 @@ export class AuthService {
     const expiresIn: string = this.config.getOrThrow<string>(
       'REFRESH_TOKEN_EXPIRES_IN',
     );
-    const refreshToken: string = this.jwtService.sign(
-      { sub: userId, type: 'refresh' },
-      { expiresIn },
-    );
+    const uuid: string = randomUUID();
+    const refreshToken: string = createHash('sha256')
+      .update(uuid)
+      .digest('hex');
     const createData: Prisma.RefreshTokenUncheckedCreateInput = {
       token: refreshToken,
       userId,
       expiresAt: new Date(Date.now() + Utility.parseExpiresIn(expiresIn)),
     };
     await this.authRepository.createRefreshToken(createData);
+    await this.storeRefreshTokenInRedis(refreshToken, userId, expiresIn);
     return refreshToken;
+  }
+
+  private async storeRefreshTokenInRedis(
+    refreshToken: string,
+    userId: string,
+    expiresIn: string,
+  ): Promise<void> {
+    const ttlInSeconds = Math.floor(Utility.parseExpiresIn(expiresIn) / 1000);
+    await this.redisService.setRefreshToken(refreshToken, userId, ttlInSeconds);
+    await this.redisService.incrementActiveSessions(userId);
+  }
+
+  private async removeRefreshTokenFromRedis(
+    refreshToken: string,
+    userId: string,
+  ): Promise<void> {
+    await this.redisService.deleteRefreshToken(refreshToken);
+    await this.redisService.decrementActiveSessions(userId);
   }
 
   async refreshAccessToken(
@@ -132,6 +155,7 @@ export class AuthService {
 
   async logout(userId: string, refreshToken: string) {
     await this.authRepository.deleteRefreshToken(userId, refreshToken);
+    await this.removeRefreshTokenFromRedis(refreshToken, userId);
     return { message: 'Logged out successfully' } as LogoutResponse;
   }
 
@@ -166,5 +190,14 @@ export class AuthService {
         createdAt: user.createdAt.toISOString(),
       },
     } as ValidateUserResponse;
+  }
+
+  public async getUserActiveSessions(userId: string): Promise<number> {
+    return await this.redisService.getActiveSessions(userId);
+  }
+
+  public async logoutAllSessions(userId: string): Promise<void> {
+    await this.authRepository.deleteAllRefreshTokensByUserId(userId);
+    await this.redisService.deleteAllSessions(userId);
   }
 }

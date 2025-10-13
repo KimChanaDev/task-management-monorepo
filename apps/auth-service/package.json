@@ -35,6 +35,7 @@
     "@repo/grpc": "*",
     "@repo/prisma": "*",
     "bcrypt": "^6.0.0",
+    "ioredis": "^5.8.1",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.2.2",

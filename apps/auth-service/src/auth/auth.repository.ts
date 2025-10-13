@@ -115,4 +115,21 @@ export class AuthRepository {
       );
     }
   }
+
+  async deleteAllRefreshTokensByUserId(userId: string) {
+    try {
+      await this.prisma.refreshToken.deleteMany({
+        where: {
+          userId,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete all refresh tokens: ${error.message}`,
+      );
+      throw new InternalRpcException(
+        `Failed to delete all refresh tokens: ${error.message}`,
+      );
+    }
+  }
 }
