@@ -59,27 +59,6 @@ export class AuthRepository {
     }
   }
 
-  async findRefreshToken(
-    refreshToken: string,
-  ): Promise<Prisma.RefreshTokenGetPayload<{
-    include: { user: true };
-  }> | null> {
-    try {
-      const token: Prisma.RefreshTokenGetPayload<{
-        include: { user: true };
-      }> | null = await this.prisma.refreshToken.findUnique({
-        where: { token: refreshToken },
-        include: { user: true },
-      });
-      return token;
-    } catch (error) {
-      this.logger.error(`Failed to get refresh token: ${error.message}`);
-      throw new InternalRpcException(
-        `Failed to get refresh token: ${error.message}`,
-      );
-    }
-  }
-
   async createRefreshToken(
     data: Prisma.RefreshTokenUncheckedCreateInput,
     select?: Prisma.RefreshTokenSelect,
@@ -129,6 +108,48 @@ export class AuthRepository {
       );
       throw new InternalRpcException(
         `Failed to delete all refresh tokens: ${error.message}`,
+      );
+    }
+  }
+
+  async revokeRefreshToken(refreshToken: string): Promise<void> {
+    try {
+      await this.prisma.refreshToken.update({
+        where: { token: refreshToken },
+        data: {
+          isRevoked: true,
+          revokedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to revoke refresh token: ${error.message}`);
+      throw new InternalRpcException(
+        `Failed to revoke refresh token: ${error.message}`,
+      );
+    }
+  }
+
+  async findRefreshTokenWithUser(
+    refreshToken: string,
+  ): Promise<Prisma.RefreshTokenGetPayload<{
+    include: { user: true };
+  }> | null> {
+    try {
+      return await this.prisma.refreshToken.findUnique({
+        where: {
+          token: refreshToken,
+          isRevoked: false,
+        },
+        include: {
+          user: true,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to find refresh token with user: ${error.message}`,
+      );
+      throw new InternalRpcException(
+        `Failed to find refresh token with user: ${error.message}`,
       );
     }
   }

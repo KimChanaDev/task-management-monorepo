@@ -55,16 +55,11 @@ export class AuthService implements OnModuleInit {
     return result.user as UserDto;
   }
 
-  async login(
-    email: string,
-    password: string,
+  private setCookies(
     response: Response,
-  ): Promise<AuthDto> {
-    const request: LoginRequest = { email, password };
-    const result: LoginResponse = await firstValueFrom(
-      this.authExternalService.login(request),
-    );
-
+    accessToken: string,
+    refreshToken: string,
+  ) {
     const isSecureEnv = this.configService.get('AUTH_SECURE_COOKIES');
     const secure: boolean =
       isSecureEnv &&
@@ -80,19 +75,30 @@ export class AuthService implements OnModuleInit {
       'REFRESH_TOKEN_EXPIRES_IN',
     );
 
-    response.cookie('AccessToken', result.accessToken, {
+    response.cookie('AccessToken', accessToken, {
       httpOnly: true,
       secure,
       sameSite: 'strict',
       maxAge: Utility.parseExpiresIn(accessTokenExpiresIn),
     });
-
-    response.cookie('RefreshToken', result.refreshToken, {
+    response.cookie('RefreshToken', refreshToken, {
       httpOnly: true,
       secure,
       sameSite: 'strict',
       maxAge: Utility.parseExpiresIn(refreshTokenExpiresIn),
     });
+  }
+
+  async login(
+    email: string,
+    password: string,
+    response: Response,
+  ): Promise<AuthDto> {
+    const request: LoginRequest = { email, password };
+    const result: LoginResponse = await firstValueFrom(
+      this.authExternalService.login(request),
+    );
+    this.setCookies(response, result.accessToken, result.refreshToken);
     return result as AuthDto;
   }
 
@@ -106,30 +112,12 @@ export class AuthService implements OnModuleInit {
     return result;
   }
 
-  async refreshToken(refreshToken: string, response: Response) {
+  async refreshAccessToken(refreshToken: string, response: Response) {
     const request: RefreshTokenRequest = { refreshToken };
     const result: RefreshTokenResponse = await firstValueFrom(
       this.authExternalService.refreshToken(request),
     );
-
-    const isSecureEnv = this.configService.get('AUTH_SECURE_COOKIES');
-    const secure: boolean =
-      isSecureEnv &&
-      typeof isSecureEnv === 'string' &&
-      isSecureEnv.toLowerCase() === 'false'
-        ? false
-        : !!isSecureEnv;
-
-    const accessTokenExpiresIn = this.configService.getOrThrow(
-      'ACCESS_TOKEN_EXPIRES_IN',
-    );
-
-    response.cookie('AccessToken', result.accessToken, {
-      httpOnly: true,
-      secure,
-      sameSite: 'strict',
-      maxAge: Utility.parseExpiresIn(accessTokenExpiresIn),
-    });
+    this.setCookies(response, result.accessToken, result.refreshToken);
     return result as AuthDto;
   }
 

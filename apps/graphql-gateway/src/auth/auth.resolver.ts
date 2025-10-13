@@ -2,10 +2,15 @@ import { Resolver, Query, Mutation, Args, Context } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDto, AuthDto } from './dto/user.dto';
-import { RegisterInput, LoginInput } from './dto/auth.input';
+import {
+  RegisterInput,
+  LoginInput,
+  RefreshAccessTokenInput,
+} from './dto/auth.input';
 import { GqlAuthGuard } from './guards/gql-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { ValidateUserResponse, type TokenPayload } from '@repo/grpc/auth';
+import { type GqlContext } from 'src/interfaces/gql-context.interface';
 
 @Resolver()
 export class AuthResolver {
@@ -23,11 +28,22 @@ export class AuthResolver {
   @Mutation(() => AuthDto)
   async login(
     @Args('input') input: LoginInput,
-    @Context() context: any,
+    @Context() context: GqlContext,
   ): Promise<AuthDto> {
     return await this.authService.login(
       input.email,
       input.password,
+      context.res,
+    );
+  }
+
+  @Mutation(() => AuthDto)
+  async refreshAccessToken(
+    @Args('refreshToken') input: RefreshAccessTokenInput,
+    @Context() context: GqlContext,
+  ): Promise<AuthDto> {
+    return await this.authService.refreshAccessToken(
+      input.refreshToken,
       context.res,
     );
   }

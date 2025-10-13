@@ -13,7 +13,7 @@ import { ValidatedUserModel } from './interfaces/validated-user.interface';
 import { UserPayload } from './interfaces/user-payload.interface';
 import { ConfigService } from '@nestjs/config';
 import { AuthLogic } from './auth.logic';
-import { UnAuthenticateRpcException } from '@repo/grpc/exception';
+import { $Enums } from '@prisma/client/auth-service/index.js';
 import { Prisma } from '@prisma/client/auth-service/index.js';
 import { AuthRepository } from './auth.repository';
 import { AuthValidation } from './auth.validation';
@@ -21,6 +21,7 @@ import { Utility } from '@repo/common/utility';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
 import { RedisService } from '../redis/redis.service';
+import { UserRedisMetadata } from './interfaces/user-redis-metadata.interface';
 
 @Injectable()
 export class AuthService {
@@ -81,7 +82,8 @@ export class AuthService {
       user.role,
     );
     const accessToken: string = this.jwtService.sign(payload);
-    const refreshToken: string = await this.createRefreshToken(user.id);
+    const refreshToken: string = await this.createRefreshToken(user);
+    await this.redisService.incrementActiveSessions(user.id);
     return {
       accessToken,
       refreshToken,
@@ -89,7 +91,7 @@ export class AuthService {
     } as LoginResponse;
   }
 
-  private async createRefreshToken(userId: string): Promise<string> {
+  private async createRefreshToken(user: ValidatedUserModel): Promise<string> {
     const expiresIn: string = this.config.getOrThrow<string>(
       'REFRESH_TOKEN_EXPIRES_IN',
     );
@@ -97,24 +99,42 @@ export class AuthService {
     const refreshToken: string = createHash('sha256')
       .update(uuid)
       .digest('hex');
+    const expiresAt = new Date(Date.now() + Utility.parseExpiresIn(expiresIn));
     const createData: Prisma.RefreshTokenUncheckedCreateInput = {
       token: refreshToken,
-      userId,
-      expiresAt: new Date(Date.now() + Utility.parseExpiresIn(expiresIn)),
+      userId: user.id,
+      expiresAt,
     };
     await this.authRepository.createRefreshToken(createData);
-    await this.storeRefreshTokenInRedis(refreshToken, userId, expiresIn);
+    await this.storeRefreshTokenInRedis(
+      refreshToken,
+      user,
+      expiresAt,
+      expiresIn,
+    );
     return refreshToken;
   }
 
   private async storeRefreshTokenInRedis(
     refreshToken: string,
-    userId: string,
+    user: ValidatedUserModel,
+    expiresAt: Date,
     expiresIn: string,
   ): Promise<void> {
     const ttlInSeconds = Math.floor(Utility.parseExpiresIn(expiresIn) / 1000);
-    await this.redisService.setRefreshToken(refreshToken, userId, ttlInSeconds);
-    await this.redisService.incrementActiveSessions(userId);
+    const payload: UserRedisMetadata = {
+      userId: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      createdAt: user.createdAt,
+      expiresAt: expiresAt.toISOString(),
+    };
+    await this.redisService.setRefreshTokenWithMetadata(
+      refreshToken,
+      payload,
+      ttlInSeconds,
+    );
   }
 
   private async removeRefreshTokenFromRedis(
@@ -128,26 +148,66 @@ export class AuthService {
   async refreshAccessToken(
     refreshToken: string,
   ): Promise<RefreshTokenResponse> {
-    try {
-      this.jwtService.verify(refreshToken);
-    } catch (error) {
-      throw new UnAuthenticateRpcException(
-        `Invalid refresh token: ${error.message}`,
-      );
-    }
-    const token: Prisma.RefreshTokenGetPayload<{
-      include: { user: true };
-    }> | null = await this.authRepository.findRefreshToken(refreshToken);
-    AuthValidation.ensureValidCredential(token);
-    AuthValidation.ensureCredentialNotExpired(token!.expiresAt);
-    const payload: UserPayload = AuthLogic.createUserPayload(
-      token!.user.id,
-      token!.user.email,
-      token!.user.username,
-      token!.user.role,
+    const data = await this.getRefreshTokenData(refreshToken);
+    await this.revokeOldRefreshToken(refreshToken);
+    const newRefreshToken = await this.createRefreshToken({
+      id: data.userId,
+      email: data.email,
+      username: data.username,
+      role: data.role as $Enums.Role,
+      createdAt: data.createdAt,
+    } as ValidatedUserModel);
+    const newAccessToken: string = this.jwtService.sign(
+      AuthLogic.createUserPayload(
+        data.userId,
+        data.email,
+        data.username,
+        data.role as $Enums.Role,
+      ),
     );
-    const newAccessToken: string = this.jwtService.sign(payload);
-    return { accessToken: newAccessToken } as RefreshTokenResponse;
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    } as RefreshTokenResponse;
+  }
+
+  private async getRefreshTokenData(refreshToken: string) {
+    const cachedData: UserRedisMetadata | null =
+      await this.redisService.getRefreshTokenMetadata(refreshToken);
+
+    let userId: string;
+    let email: string;
+    let username: string;
+    let role: string;
+    let createdAt: string;
+
+    if (cachedData) {
+      const expiresAt: Date = new Date(cachedData.expiresAt);
+      AuthValidation.ensureCredentialNotExpired(expiresAt);
+      userId = cachedData.userId;
+      email = cachedData.email;
+      username = cachedData.username;
+      createdAt = cachedData.createdAt;
+      role = cachedData.role;
+    } else {
+      const tokenData: Prisma.RefreshTokenGetPayload<{
+        include: { user: true };
+      }> | null =
+        await this.authRepository.findRefreshTokenWithUser(refreshToken);
+      AuthValidation.ensureValidCredential(tokenData);
+      AuthValidation.ensureCredentialNotExpired(tokenData!.expiresAt);
+      userId = tokenData!.user.id;
+      email = tokenData!.user.email;
+      username = tokenData!.user.username;
+      createdAt = tokenData!.user.createdAt.toISOString();
+      role = tokenData!.user.role;
+    }
+    return { userId, email, username, role, createdAt };
+  }
+
+  private async revokeOldRefreshToken(refreshToken: string): Promise<void> {
+    await this.authRepository.revokeRefreshToken(refreshToken);
+    await this.redisService.deleteRefreshToken(refreshToken);
   }
 
   async logout(userId: string, refreshToken: string) {

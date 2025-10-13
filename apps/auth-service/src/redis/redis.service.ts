@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { UserRedisMetadata } from 'src/auth/interfaces/user-redis-metadata.interface';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -29,15 +30,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy() {
     await this.client.quit();
-  }
-
-  async setRefreshToken(
-    refreshToken: string,
-    userId: string,
-    ttlInSeconds: number,
-  ): Promise<void> {
-    const key = `refresh_token:${refreshToken}`;
-    await this.client.setex(key, ttlInSeconds, userId);
   }
 
   async getUserIdFromRefreshToken(
@@ -83,5 +75,27 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async getRefreshTokenTTL(refreshToken: string): Promise<number> {
     const key = `refresh_token:${refreshToken}`;
     return await this.client.ttl(key);
+  }
+
+  async setRefreshTokenWithMetadata(
+    refreshToken: string,
+    data: UserRedisMetadata,
+    ttlInSeconds: number,
+  ): Promise<void> {
+    const key = `refresh_token:${refreshToken}`;
+    await this.client.setex(key, ttlInSeconds, JSON.stringify(data));
+  }
+
+  async getRefreshTokenMetadata(
+    refreshToken: string,
+  ): Promise<UserRedisMetadata | null> {
+    const key = `refresh_token:${refreshToken}`;
+    const data = await this.client.get(key);
+    if (!data) return null;
+    try {
+      return JSON.parse(data);
+    } catch {
+      return null;
+    }
   }
 }
