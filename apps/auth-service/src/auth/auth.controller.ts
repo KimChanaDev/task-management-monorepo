@@ -41,7 +41,7 @@ export class AuthController implements AuthServiceController {
 
   validateToken(data: ValidateTokenRequest): ValidateTokenResponse {
     const payload = this.authService.validateToken(data.token);
-    return { valid: true, payload } as ValidateTokenResponse;
+    return { valid: payload ? true : false, payload } as ValidateTokenResponse;
   }
 
   async refreshToken(data: RefreshTokenRequest): Promise<RefreshTokenResponse> {

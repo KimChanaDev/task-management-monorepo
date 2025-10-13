@@ -100,7 +100,9 @@ export class AuthService implements OnModuleInit {
     const request: ValidateTokenRequest = { token };
     const result: ValidateTokenResponse = await firstValueFrom(
       this.authExternalService.validateToken(request),
-    );
+    ).catch((error) => {
+      throw new Error(`Internal (auth) service error: ${error.message}`);
+    });
     return result;
   }
 

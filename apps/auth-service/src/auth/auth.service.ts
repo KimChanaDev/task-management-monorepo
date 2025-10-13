@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService, TokenExpiredError } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -13,10 +13,7 @@ import { ValidatedUserModel } from './interfaces/validated-user.interface';
 import { UserPayload } from './interfaces/user-payload.interface';
 import { ConfigService } from '@nestjs/config';
 import { AuthLogic } from './auth.logic';
-import {
-  DeadlineExceededRpcException,
-  UnAuthenticateRpcException,
-} from '@repo/grpc/exception';
+import { UnAuthenticateRpcException } from '@repo/grpc/exception';
 import { Prisma } from '@prisma/client/auth-service/index.js';
 import { AuthRepository } from './auth.repository';
 import { AuthValidation } from './auth.validation';
@@ -163,12 +160,8 @@ export class AuthService {
     try {
       const payload: UserPayload = this.jwtService.verify(token);
       return payload;
-    } catch (error) {
-      if (error instanceof TokenExpiredError) {
-        throw new DeadlineExceededRpcException('Token has expired');
-      } else {
-        throw new UnAuthenticateRpcException(`Invalid token: ${error.message}`);
-      }
+    } catch {
+      return null;
     }
   }
 
