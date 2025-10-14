@@ -22,7 +22,6 @@ model User {
     updatedAt DateTime @updatedAt @db.Timestamptz
 
     refreshTokens RefreshToken[]
-    sessions      Session[]
 
     @@map("users")
 }
@@ -47,20 +46,6 @@ model RefreshToken {
     @@index([token, isRevoked])
     @@index([expiresAt])
     @@map("refresh_tokens")
-}
-
-model Session {
-    id        String   @id @default(uuid())
-    userId    String
-    token     String   @unique
-    ipAddress String?
-    userAgent String?
-    expiresAt DateTime @db.Timestamptz
-    createdAt DateTime @default(now()) @db.Timestamptz
-
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    @@map("sessions")
 }
 
 enum Role {

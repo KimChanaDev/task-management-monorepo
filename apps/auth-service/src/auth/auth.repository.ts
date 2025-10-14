@@ -154,13 +154,20 @@ export class AuthRepository {
     }
   }
 
-  async findRefreshToken(
-    refreshToken: string,
-  ): Promise<Prisma.RefreshTokenGetPayload<object> | null> {
+  async findRefreshTokenRevoke(refreshToken: string): Promise<{
+    userId: string;
+    tokenFamily: string;
+    isRevoked: boolean;
+  } | null> {
     try {
       return await this.prisma.refreshToken.findUnique({
         where: {
           token: refreshToken,
+        },
+        select: {
+          userId: true,
+          tokenFamily: true,
+          isRevoked: true,
         },
       });
     } catch (error) {
@@ -190,6 +197,56 @@ export class AuthRepository {
       this.logger.error(`Failed to revoke token family: ${error.message}`);
       throw new InternalRpcException(
         `Failed to revoke token family: ${error.message}`,
+      );
+    }
+  }
+
+  async deleteExpiredRefreshTokens(): Promise<number> {
+    try {
+      const result = await this.prisma.refreshToken.deleteMany({
+        where: {
+          expiresAt: {
+            lt: new Date(),
+          },
+        },
+      });
+      this.logger.log(
+        `🗑️ Deleted ${result.count} expired refresh tokens from database`,
+      );
+      return result.count;
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete expired refresh tokens: ${error.message}`,
+      );
+      throw new InternalRpcException(
+        `Failed to delete expired refresh tokens: ${error.message}`,
+      );
+    }
+  }
+
+  async deleteOldRevokedTokens(daysOld = 1): Promise<number> {
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+      const result = await this.prisma.refreshToken.deleteMany({
+        where: {
+          isRevoked: true,
+          revokedAt: {
+            lt: cutoffDate,
+          },
+        },
+      });
+      this.logger.log(
+        `🗑️ Deleted ${result.count} old revoked tokens (older than ${daysOld} days)`,
+      );
+      return result.count;
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete old revoked tokens: ${error.message}`,
+      );
+      throw new InternalRpcException(
+        `Failed to delete old revoked tokens: ${error.message}`,
       );
     }
   }

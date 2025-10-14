@@ -154,7 +154,7 @@ export class AuthService {
     );
   }
 
-  async refreshAccessToken(
+  public async refreshAccessToken(
     refreshToken: string,
     metadata: ClientMetadata,
   ): Promise<RefreshTokenResponse> {
@@ -192,7 +192,7 @@ export class AuthService {
     refreshToken: string,
   ): Promise<void> {
     const tokenRecord =
-      await this.authRepository.findRefreshToken(refreshToken);
+      await this.authRepository.findRefreshTokenRevoke(refreshToken);
 
     // If token doesn't exist, it will be caught in getRefreshTokenData
     if (!tokenRecord) {
@@ -248,7 +248,7 @@ export class AuthService {
     await this.redisService.deleteRefreshToken(refreshToken);
   }
 
-  async logout(userId: string, refreshToken: string) {
+  public async logout(userId: string, refreshToken: string) {
     await this.revokeOldRefreshToken(refreshToken);
     await this.redisService.decrementActiveSessions(userId);
     return { message: 'Logged out successfully' } as LogoutResponse;

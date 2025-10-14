@@ -4,12 +4,10 @@ import { PassportModule } from '@nestjs/passport';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { LocalStrategy } from './strategies/local.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthRepository } from './auth.repository';
-import { RedisService } from '../redis/redis.service';
 import { SessionController } from './session.controller';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
@@ -27,15 +25,10 @@ import { SessionController } from './session.controller';
       }),
     }),
     PrismaModule,
+    RedisModule,
   ],
   controllers: [AuthController, SessionController],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    LocalStrategy,
-    AuthRepository,
-    RedisService,
-  ],
-  exports: [AuthService],
+  providers: [AuthService, AuthRepository],
+  exports: [AuthService, AuthRepository],
 })
 export class AuthModule {}

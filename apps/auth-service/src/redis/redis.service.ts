@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { REDIS_KEYS } from 'src/auth/constants/redis-key.constant';
 import { UserRedisMetadata } from 'src/auth/interfaces/user-redis-metadata.interface';
 
 @Injectable()
@@ -102,7 +103,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   ): Promise<string | null> {
     return this.safeExecute(
       async () => {
-        const key = `refresh_token:${refreshToken}`;
+        const key = REDIS_KEYS.refreshToken(refreshToken);
         return await this.client.get(key);
       },
       null,
@@ -113,7 +114,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async deleteRefreshToken(refreshToken: string): Promise<void> {
     await this.safeExecute(
       async () => {
-        const key = `refresh_token:${refreshToken}`;
+        const key = REDIS_KEYS.refreshToken(refreshToken);
         await this.client.del(key);
       },
       undefined,
@@ -124,7 +125,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async incrementActiveSessions(userId: string): Promise<number> {
     return this.safeExecute(
       async () => {
-        const key = `user:${userId}:active_sessions`;
+        const key = REDIS_KEYS.userActiveSessions(userId);
         return await this.client.incr(key);
       },
       0,
@@ -135,7 +136,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async decrementActiveSessions(userId: string): Promise<number> {
     return this.safeExecute(
       async () => {
-        const key = `user:${userId}:active_sessions`;
+        const key = REDIS_KEYS.userActiveSessions(userId);
         const count = await this.client.decr(key);
 
         if (count < 0) {
@@ -153,7 +154,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async getActiveSessions(userId: string): Promise<number> {
     return this.safeExecute(
       async () => {
-        const key = `user:${userId}:active_sessions`;
+        const key = REDIS_KEYS.userActiveSessions(userId);
         const count = await this.client.get(key);
         return count ? parseInt(count, 10) : 0;
       },
@@ -165,7 +166,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async deleteAllSessions(userId: string): Promise<void> {
     await this.safeExecute(
       async () => {
-        const key = `user:${userId}:active_sessions`;
+        const key = REDIS_KEYS.userActiveSessions(userId);
         await this.client.del(key);
       },
       undefined,
@@ -176,7 +177,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async getRefreshTokenTTL(refreshToken: string): Promise<number> {
     return this.safeExecute(
       async () => {
-        const key = `refresh_token:${refreshToken}`;
+        const key = REDIS_KEYS.refreshToken(refreshToken);
         return await this.client.ttl(key);
       },
       -1,
@@ -191,7 +192,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   ): Promise<void> {
     await this.safeExecute(
       async () => {
-        const key = `refresh_token:${refreshToken}`;
+        const key = REDIS_KEYS.refreshToken(refreshToken);
         await this.client.setex(key, ttlInSeconds, JSON.stringify(data));
       },
       undefined,
@@ -204,7 +205,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   ): Promise<UserRedisMetadata | null> {
     return this.safeExecute(
       async () => {
-        const key = `refresh_token:${refreshToken}`;
+        const key = REDIS_KEYS.refreshToken(refreshToken);
         const data = await this.client.get(key);
         if (!data) return null;
         try {
