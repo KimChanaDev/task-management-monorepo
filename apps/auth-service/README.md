@@ -1,98 +1,182 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Auth Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Authentication and Authorization Service with gRPC API built with NestJS and Prisma ORM.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- ✅ User registration and authentication
+- ✅ JWT access token and refresh token with token rotation
+- ✅ Token family tracking for enhanced security
+- ✅ Device and session management
+- ✅ Role-based access control (USER, ADMIN, MANAGER)
+- ✅ Password hashing with bcrypt
+- ✅ Redis integration for session management
+- ✅ Graceful token degradation
+- ✅ gRPC communication
+- ✅ Background job processing for clean up token with Bull Queue
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+- **NestJS** - Framework
+- **Prisma ORM** - Database ORM
+- **PostgreSQL** - Database
+- **Redis** - Session storage and caching
+- **gRPC** - Communication protocol
+- **JWT** - Token-based authentication
+- **Bull Queue** - Background job processing
+- **TypeScript** - Programming language
 
-```bash
-$ npm install
-```
+## Getting Started
 
-## Compile and run the project
+### Install dependencies
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### Environment Variables
+
+Create a `.env` file:
+
+```env
+DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=auth"
+
+APP_VERSION="1.0.0"
+HTTP_PORT=4000
+GRPC_PORT=5000
+
+JWT_SECRET="your_jwt_secret_key"
+ACCESS_TOKEN_EXPIRES_IN="15m"
+REFRESH_TOKEN_EXPIRES_IN="7d"
+
+REDIS_HOST="localhost"
+REDIS_PORT=6379
+```
+
+### Run Prisma migrations
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run prisma:generate
+npm run prisma:migrate
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Start the service
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Development
+npm run dev
+
+# Production
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Database Schema
 
-## Resources
+### User Model
 
-Check out a few resources that may come in handy when working with NestJS:
+```prisma
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  avatar    String?
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+  refreshTokens RefreshToken[]
+}
+```
 
-## Support
+### RefreshToken Model
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```prisma
+model RefreshToken {
+  id          String    @id @default(uuid())
+  token       String    @unique
+  tokenFamily String
+  userId      String
+  deviceId    String?
+  deviceName  String?
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  isRevoked   Boolean   @default(false)
+  revokedAt   DateTime?
 
-## Stay in touch
+  user User @relation(fields: [userId], references: [id])
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Enums
 
-## License
+- **Role**: USER, ADMIN, MANAGER
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## gRPC API
+
+### Available Methods
+
+1. **register** - Register a new user
+2. **login** - Authenticate user and get tokens
+3. **logout** - Revoke refresh token and clear session
+4. **refreshToken** - Get new access token using refresh token
+5. **validateToken** - Validate access token
+6. **validateUser** - Validate user by ID
+
+## Features in Detail
+
+### Token Rotation
+
+The service implements secure token rotation with token families:
+
+- Each login creates a new token family
+- Refresh tokens are rotated on each refresh
+- Detects token reuse and revokes entire family
+- Tracks device information for security
+
+### Session Management
+
+- Redis-based session storage
+- Device tracking (device ID, name, IP, user agent)
+- Session expiration handling
+- Graceful degradation when Redis is unavailable
+
+### Background Jobs
+
+- Automatic cleanup of expired tokens
+
+## Scripts
+
+- `npm run dev` - Start development server with watch mode
+- `npm run build` - Build for production
+- `npm run start:prod` - Start production server
+- `npm run prisma:generate` - Generate Prisma Client
+- `npm run prisma:migrate` - Run database migrations
+- `npm run prisma:migrate:reset` - Reset database migrations
+- `npm run prisma:studio` - Open Prisma Studio
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
+- `npm run test` - Run tests
+
+## Security Features
+
+- **Password Hashing**: bcrypt with salt rounds
+- **Token Rotation**: Automatic rotation of refresh tokens
+- **Token Family**: Tracks token lineage for security
+- **Token Reuse Detection**: Revokes entire family on reuse attempt
+- **Device Tracking**: Monitors device information
+- **Graceful Degradation**: Continues to work if Redis is down
+- **Token Expiration**: Short-lived access tokens (15m)
+- **Refresh Token Expiration**: Long-lived refresh tokens (7d)
+
+## Integration
+
+- GraphQL Gateway - Main API entry point
+- Task Service - For user task operations
+- Redis - Session and cache storage

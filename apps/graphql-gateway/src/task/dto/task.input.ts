@@ -77,7 +77,7 @@ export class UpdateTaskInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  assignedToId?: string;
+  assignedTo?: string;
 }
 
 @InputType()

@@ -21,12 +21,6 @@ export class UserDto {
 }
 
 @ObjectType()
-export class AuthDto {
-  @Field(() => UserDto)
-  user: UserDto;
-}
-
-@ObjectType()
 export class MessageDto {
   @Field()
   message: string;

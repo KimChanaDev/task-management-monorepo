@@ -22,7 +22,7 @@ import {
 } from '@repo/grpc/auth';
 import { ProtoPackage } from '@repo/grpc/package';
 import { firstValueFrom } from 'rxjs';
-import { AuthDto, MessageDto, UserDto } from './dto/user.dto';
+import { MessageDto, UserDto } from './dto/user.dto';
 import { GrpcCall } from '@repo/grpc/grpc-call';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
@@ -100,7 +100,7 @@ export class AuthService implements OnModuleInit {
     password: string,
     response: Response,
     metadata: ClientMetadata,
-  ): Promise<AuthDto> {
+  ): Promise<UserDto> {
     const request: LoginRequest = {
       email,
       password,
@@ -113,7 +113,7 @@ export class AuthService implements OnModuleInit {
       return firstValueFrom(this.authExternalService.login(request));
     });
     this.setCookies(response, result.accessToken, result.refreshToken);
-    return { user: result.user } as AuthDto;
+    return { ...result.user } as UserDto;
   }
 
   public async logout(

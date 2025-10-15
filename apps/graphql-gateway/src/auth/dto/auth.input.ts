@@ -26,7 +26,7 @@ export class RegisterInput {
 
   @Field()
   @IsString()
-  name: string;
+  username: string;
 }
 
 @InputType()

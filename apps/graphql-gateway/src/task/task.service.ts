@@ -69,7 +69,7 @@ export class TaskService implements OnModuleInit {
       status: input.status?.toString() || '',
       priority: input.priority?.toString() || '',
       dueDate: input.dueDate || '',
-      assignedTo: input.assignedToId || '',
+      assignedTo: input.assignedTo || '',
     };
     const result: TaskResponse = await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(this.taskService.updateTask(request));
