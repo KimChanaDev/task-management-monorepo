@@ -22,7 +22,7 @@ import {
   TaskFilterInput,
   UpdateTaskInput,
 } from './dto/task.input';
-import { GrpcCall } from '@repo/grpc/grpc-call';
+import { GrpcCall } from 'src/utilities/grpc-call.handler';
 
 @Injectable()
 export class TaskService implements OnModuleInit {

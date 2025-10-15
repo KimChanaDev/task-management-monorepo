@@ -34,15 +34,13 @@ npm install
 Create a `.env` file:
 
 ```env
-# Database
 DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=task"
 
-# Service
+NODE_ENV="Local"
+APP_VERSION=1.0.0
 HTTP_PORT=4001
 GRPC_PORT=5001
-APP_VERSION=1.0.0
 
-# gRPC external services
 AUTH_SERVICE_GRPC_URL=localhost:5000
 
 ```

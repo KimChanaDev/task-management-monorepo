@@ -23,7 +23,7 @@ import {
 import { ProtoPackage } from '@repo/grpc/package';
 import { firstValueFrom } from 'rxjs';
 import { MessageDto, UserDto } from './dto/user.dto';
-import { GrpcCall } from '@repo/grpc/grpc-call';
+import { GrpcCall } from 'src/utilities/grpc-call.handler';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Utility } from '@repo/common/utility';

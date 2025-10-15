@@ -24,7 +24,7 @@ export class GqlAuthGuard implements CanActivate {
     const result: ValidateTokenResponse =
       await this.authService.validateToken(accessToken);
     if (result.valid) {
-      req.user = result.payload as TokenPayload;
+      req['user'] = result.payload as TokenPayload;
       return true;
     } else {
       throw new UnauthorizedException('Invalid token');

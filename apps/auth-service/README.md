@@ -41,6 +41,7 @@ Create a `.env` file:
 ```env
 DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=auth"
 
+NODE_ENV="Local"
 APP_VERSION="1.0.0"
 HTTP_PORT=4000
 GRPC_PORT=5000
