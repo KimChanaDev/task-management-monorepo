@@ -4,6 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { YogaDriver, YogaDriverConfig } from '@graphql-yoga/nestjs';
 import { GqlContext } from './interfaces/gql-context.interface';
+import { TaskModule } from './task/task.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { GqlContext } from './interfaces/gql-context.interface';
       plugins: [],
     }),
     AuthModule,
+    TaskModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

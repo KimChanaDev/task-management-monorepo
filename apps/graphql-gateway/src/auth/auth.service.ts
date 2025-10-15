@@ -23,6 +23,7 @@ import {
 import { ProtoPackage } from '@repo/grpc/package';
 import { firstValueFrom } from 'rxjs';
 import { AuthDto, MessageDto, UserDto } from './dto/user.dto';
+import { GrpcCall } from '@repo/grpc/grpc-call';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { Utility } from '@repo/common/utility';
@@ -42,7 +43,7 @@ export class AuthService implements OnModuleInit {
       this.client.getService<AuthServiceClient>('AuthService');
   }
 
-  async register(
+  public async register(
     email: string,
     password: string,
     username: string,
@@ -52,8 +53,10 @@ export class AuthService implements OnModuleInit {
       password,
       username,
     };
-    const result: RegisterResponse = await firstValueFrom(
-      this.authExternalService.register(request),
+    const result: RegisterResponse = await GrpcCall.callByHandlerException(
+      () => {
+        return firstValueFrom(this.authExternalService.register(request));
+      },
     );
     return result.user as UserDto;
   }
@@ -92,7 +95,7 @@ export class AuthService implements OnModuleInit {
     });
   }
 
-  async login(
+  public async login(
     email: string,
     password: string,
     response: Response,
@@ -106,34 +109,38 @@ export class AuthService implements OnModuleInit {
       deviceId: metadata.deviceId,
       deviceName: metadata.deviceName,
     };
-    const result: LoginResponse = await firstValueFrom(
-      this.authExternalService.login(request),
-    );
+    const result: LoginResponse = await GrpcCall.callByHandlerException(() => {
+      return firstValueFrom(this.authExternalService.login(request));
+    });
     this.setCookies(response, result.accessToken, result.refreshToken);
     return { user: result.user } as AuthDto;
   }
 
-  async logout(userId: string, refreshToken: string, response: Response) {
+  public async logout(
+    userId: string,
+    refreshToken: string,
+    response: Response,
+  ) {
     const request: LogoutRequest = { userId, refreshToken };
-    const result: LogoutResponse = await firstValueFrom(
-      this.authExternalService.logout(request),
-    );
+    const result: LogoutResponse = await GrpcCall.callByHandlerException(() => {
+      return firstValueFrom(this.authExternalService.logout(request));
+    });
     response.clearCookie('AccessToken');
     response.clearCookie('RefreshToken');
     return result as MessageDto;
   }
 
-  async validateToken(token: string): Promise<ValidateTokenResponse> {
+  public async validateToken(token: string): Promise<ValidateTokenResponse> {
     const request: ValidateTokenRequest = { token };
-    const result: ValidateTokenResponse = await firstValueFrom(
-      this.authExternalService.validateToken(request),
-    ).catch((error) => {
-      throw new Error(`Internal (auth) service error: ${error.message}`);
-    });
+    const result: ValidateTokenResponse = await GrpcCall.callByHandlerException(
+      () => {
+        return firstValueFrom(this.authExternalService.validateToken(request));
+      },
+    );
     return result;
   }
 
-  async refreshAccessToken(
+  public async refreshAccessToken(
     refreshToken: string,
     response: Response,
     metadata: ClientMetadata,
@@ -145,17 +152,21 @@ export class AuthService implements OnModuleInit {
       deviceId: metadata.deviceId,
       deviceName: metadata.deviceName,
     };
-    const result: RefreshTokenResponse = await firstValueFrom(
-      this.authExternalService.refreshToken(request),
+    const result: RefreshTokenResponse = await GrpcCall.callByHandlerException(
+      () => {
+        return firstValueFrom(this.authExternalService.refreshToken(request));
+      },
     );
     this.setCookies(response, result.accessToken, result.refreshToken);
     return { message: 'Token refreshed successfully' } as MessageDto;
   }
 
-  async getUser(userId: string): Promise<ValidateUserResponse> {
+  public async getUser(userId: string): Promise<ValidateUserResponse> {
     const request: ValidateUserRequest = { userId };
-    const result: ValidateUserResponse = await firstValueFrom(
-      this.authExternalService.validateUser(request),
+    const result: ValidateUserResponse = await GrpcCall.callByHandlerException(
+      () => {
+        return firstValueFrom(this.authExternalService.validateUser(request));
+      },
     );
     if (!result.valid || !result.user) {
       throw new NotFoundException('User not found');

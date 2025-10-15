@@ -81,9 +81,9 @@ export class TaskRepository {
       const task: Prisma.TaskGetPayload<any> = await this.prisma.task.create({
         data: {
           title: data.title,
-          description: data.description,
-          priority: data.priority as TaskPriority,
-          status: data.status as TaskStatus,
+          description: data.description || null,
+          priority: (data.priority as TaskPriority) || undefined,
+          status: (data.status as TaskStatus) || undefined,
           dueDate: data.dueDate ? new Date(data.dueDate) : null,
           createdBy: data.createdBy,
           assignedTo: data.assignedTo || null,

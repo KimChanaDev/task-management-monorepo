@@ -46,8 +46,9 @@ export class TaskService {
     TaskValidation.ensureGetTaskRequest(id);
     const task: Prisma.TaskGetPayload<any> | null =
       await this.taskRepository.findTaskById(id);
-    TaskValidation.ensureTaskFound(task, id);
-    return { task: TaskLogic.formatTask(task!) } as TaskResponse;
+    return {
+      task: task ? TaskLogic.formatTask(task) : undefined,
+    } as TaskResponse;
   }
 
   async getTasks(params: GetTasksRequest): Promise<TasksResponse> {
@@ -80,12 +81,12 @@ export class TaskService {
       await this.authExternalService.validateUserExists(data.assignedTo);
     }
     const updateData: Prisma.TaskUpdateInput = {
-      title: data.title,
-      description: data.description,
-      priority: data.priority as TaskPriority,
-      status: data.status as TaskStatus,
+      title: data.title || undefined,
+      description: data.description || undefined,
+      priority: (data.priority as TaskPriority) || undefined,
+      status: (data.status as TaskStatus) || undefined,
       dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-      assignedTo: data.assignedTo,
+      assignedTo: data.assignedTo || undefined,
     };
     const updated = await this.taskRepository.updateTask(data.id, updateData);
     return { task: TaskLogic.formatTask(updated) } as TaskResponse;

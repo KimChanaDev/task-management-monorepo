@@ -5,6 +5,7 @@ import { join } from 'path';
 import { AuthResolver } from './auth.resolver';
 import { AuthService } from './auth.service';
 import { ProtoPackage } from '@repo/grpc/package';
+import { GqlAuthGuard } from './guards/gql-auth.guard';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { ProtoPackage } from '@repo/grpc/package';
       },
     ]),
   ],
-  providers: [AuthResolver, AuthService],
+  providers: [AuthResolver, AuthService, GqlAuthGuard],
   exports: [AuthService],
 })
 export class AuthModule {}

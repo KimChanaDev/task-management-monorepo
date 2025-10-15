@@ -7,7 +7,8 @@
     "generate-ts-proto": "protoc --plugin=../../node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=./shared-types --ts_proto_opt=nestJs=true --ts_proto_opt=exportCommonSymbols=false --proto_path=./proto ./proto/*.proto"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.13.4"
+    "@grpc/grpc-js": "^1.13.4",
+    "@nestjs/common": "^11.0.1"
   },
   "devDependencies": {
     "ts-proto": "^2.7.7",
@@ -29,6 +30,10 @@
     "./package": {
       "types": "./src/proto-package.enum.ts",
       "default": "./dist/src/proto-package.enum.js"
+    },
+    "./grpc-call": {
+      "types": "./src/grpc-call.handler.ts",
+      "default": "./dist/src/grpc-call.handler.js"
     }
   }
 }

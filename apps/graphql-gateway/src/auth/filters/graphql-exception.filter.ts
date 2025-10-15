@@ -1,32 +1,34 @@
 import { Catch, HttpException } from '@nestjs/common';
 import { GqlExceptionFilter } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
-
-@Catch(HttpException)
+@Catch()
 export class GraphQLExceptionFilter implements GqlExceptionFilter {
   catch(exception: HttpException) {
-    const response = exception.getResponse();
-
+    if (exception instanceof GraphQLError) {
+      return exception;
+    }
+    const response: string | object = exception.getResponse();
+    const status = exception.getStatus();
     let message = exception.message;
-    const extensions: any = {
-      code: exception.getStatus(),
-    };
-
+    let validationErrors: any[] = [];
+    let error: string | undefined = undefined;
     // if response is object and has message array (from ValidationPipe)
     if (typeof response === 'object' && response['message']) {
+      error = response['error'];
       const responseMessage = response['message'];
-
       if (Array.isArray(responseMessage)) {
-        // Combine validation errors into a single string
         message = responseMessage.join(', ');
-        extensions.validationErrors = responseMessage;
+        validationErrors = responseMessage;
       } else {
         message = responseMessage;
       }
     }
-
     return new GraphQLError(message, {
-      extensions,
+      extensions: {
+        error,
+        statusCode: status,
+        validationErrors,
+      },
     });
   }
 }
