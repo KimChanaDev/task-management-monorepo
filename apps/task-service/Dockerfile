@@ -18,6 +18,8 @@ RUN npm run build
 # Stage 2: Run the application   #
 ##################################
 FROM node:24.7.0-alpine as runner
+RUN apk add --no-cache \
+    curl
 
 WORKDIR /app
 COPY package*.json ./
@@ -33,14 +35,7 @@ COPY --from=builder /app/node_modules/@prisma/client/task-service ./node_modules
 COPY --from=builder /app/apps/task-service/prisma ./apps/task-service/prisma
 COPY --from=builder /app/packages ./packages
 
-ENV DATABASE_URL="postgresql://taskuser:taskpass@postgres:5432/taskdb?schema=task"
-ENV NODE_ENV="Local"
-ENV APP_VERSION=1.0.0
-ENV HTTP_PORT=4001
-ENV GRPC_PORT=5001
-ENV AUTH_SERVICE_GRPC_URL=auth-service:5000
-
 WORKDIR /app/apps/task-service
-EXPOSE 4001
-EXPOSE 5001
+EXPOSE ${HTTP_PORT}
+EXPOSE ${GRPC_PORT}
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
