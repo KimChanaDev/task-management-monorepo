@@ -80,11 +80,13 @@ async function fetchUser(accessToken: string): Promise<App.Locals> {
 	});
 
 	if (!response.ok) {
-		throw new Error('Failed to fetch user');
+		throw new Error('Error fetching user');
 	}
 
 	const result = await response.json();
-
+	if (result.errors) {
+		throw new Error('Error fetching user: ' + result.errors[0].message);
+	}
 	const data: App.Locals = {
 		user: result.data?.me || null
 	};

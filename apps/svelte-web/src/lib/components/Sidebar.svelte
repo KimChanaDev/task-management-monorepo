@@ -1,0 +1,148 @@
+<script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { AUTH_QUERIES } from '$lib/graphql';
+	import { getContextClient } from '@urql/svelte';
+	const client = getContextClient();
+
+	interface ComponentProps {
+		user: {
+			username: string;
+			email: string;
+		} | null;
+		sidebarOpen: boolean;
+	}
+
+	let { user, sidebarOpen = $bindable() }: ComponentProps = $props();
+	let isDesktop = $state(false);
+
+	async function logout() {
+		try {
+			await client.mutation(AUTH_QUERIES.LOGOUT, {});
+		} catch (error) {
+			console.error('Logout error:', error);
+		}
+
+		await invalidateAll(); // Invalidate all data to trigger re-fetch
+		window.location.href = '/auth/login';
+	}
+</script>
+
+<aside
+	class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 {!sidebarOpen &&
+	!isDesktop
+		? '-translate-x-full'
+		: ''}"
+>
+	<div class="flex flex-col h-full">
+		<!-- Logo -->
+		<div class="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+			<h1 class="text-xl font-bold text-indigo-600">TaskFlow</h1>
+			<button
+				aria-label="logo button"
+				onclick={() => (sidebarOpen = !sidebarOpen)}
+				class="lg:hidden text-gray-500 hover:text-gray-700"
+			>
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M6 18L18 6M6 6l12 12"
+					/>
+				</svg>
+			</button>
+		</div>
+
+		<!-- Navigation -->
+		<nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+			<a
+				href="/dashboard"
+				class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+			>
+				<svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+					/>
+				</svg>
+				Dashboard
+			</a>
+
+			<a
+				href="/dashboard/tasks"
+				class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+			>
+				<svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+					/>
+				</svg>
+				Tasks
+			</a>
+
+			<a
+				href="/dashboard/create"
+				class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+			>
+				<svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 4v16m8-8H4"
+					/>
+				</svg>
+				Create Task
+			</a>
+
+			<a
+				href="/dashboard/analytics"
+				class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+			>
+				<svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+					/>
+				</svg>
+				Analytics
+			</a>
+		</nav>
+
+		<!-- User Profile -->
+		{#if user}
+			<div class="p-4 border-t border-gray-200">
+				<div class="flex items-center">
+					<div class="flex-shrink-0">
+						<div
+							class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold"
+						>
+							{user.username?.charAt(0).toUpperCase() || 'U'}
+						</div>
+					</div>
+					<div class="ml-3 flex-1">
+						<p class="text-sm font-medium text-gray-900">{user.username}</p>
+						<p class="text-xs text-gray-500">{user.email}</p>
+					</div>
+					<button onclick={logout} class="text-gray-400 hover:text-gray-600" title="Logout">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+							/>
+						</svg>
+					</button>
+				</div>
+			</div>
+		{/if}
+	</div>
+</aside>

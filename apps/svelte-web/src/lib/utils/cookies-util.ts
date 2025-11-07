@@ -1,3 +1,5 @@
+import { COOKIE_MAX_AGE } from '$consts';
+
 export function findAuthCookies(
 	setCookieHeader: string | null,
 	cookieName: string
@@ -15,14 +17,14 @@ export function setAuthCookies(event: any, accessToken: string, refreshToken: st
 		httpOnly: true,
 		secure: true,
 		sameSite: 'strict',
-		maxAge: 15 * 60 * 1000 // 15 minutes
+		maxAge: COOKIE_MAX_AGE.ACCESS_TOKEN
 	});
 	event.cookies.set('RefreshToken', refreshToken, {
 		path: '/',
 		httpOnly: true,
 		secure: true,
 		sameSite: 'strict',
-		maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+		maxAge: COOKIE_MAX_AGE.REFRESH_TOKEN
 	});
 }
 
