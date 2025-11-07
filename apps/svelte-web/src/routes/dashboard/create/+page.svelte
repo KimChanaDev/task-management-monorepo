@@ -3,6 +3,7 @@
 	import { getContextClient } from '@urql/svelte';
 	import { TASK_QUERIES, type ICreateTaskInput } from '$lib/graphql';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
+	import { toTitleCaseFromEnum } from '$utils';
 
 	const client = getContextClient();
 
@@ -105,7 +106,7 @@
 						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 					>
 						{#each Object.values(TASK_PRIORITY) as priority}
-							<option value={priority}>{priority}</option>
+							<option value={priority}>{toTitleCaseFromEnum(priority)}</option>
 						{/each}
 					</select>
 				</div>
@@ -121,7 +122,7 @@
 						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 					>
 						{#each Object.values(TASK_STATUS) as status}
-							<option value={status}>{status}</option>
+							<option value={status}>{toTitleCaseFromEnum(status)}</option>
 						{/each}
 					</select>
 				</div>

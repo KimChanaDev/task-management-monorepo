@@ -11,7 +11,6 @@
 	let { data, children }: ComponentProps = $props();
 	let sidebarOpen = $state(true);
 
-	// User comes from server-side via locals
 	let user = $derived(data.user);
 </script>
 
