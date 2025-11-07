@@ -32,3 +32,12 @@ export class TaskDto {
   @Field()
   updatedAt: string;
 }
+
+@ObjectType()
+export class MyTasksDto {
+  @Field(() => [TaskDto])
+  tasks: TaskDto[];
+
+  @Field()
+  total: number;
+}

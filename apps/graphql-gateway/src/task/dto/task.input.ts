@@ -119,4 +119,14 @@ export class MyTaskFilterInput {
   @IsOptional()
   @IsEnum(TaskStatus)
   status?: TaskStatus;
+
+  @Field(() => TaskPriority, { nullable: true })
+  @IsOptional()
+  @IsEnum(TaskPriority)
+  priority?: TaskPriority;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

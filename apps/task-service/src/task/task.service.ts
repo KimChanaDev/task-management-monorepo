@@ -127,12 +127,35 @@ export class TaskService {
 
   async getUserTasks(params: GetUserTasksRequest): Promise<TasksResponse> {
     TaskValidation.ensureGetUserTasksRequest(params);
-    const { userId, page = 1, limit = 10, status } = params;
+    const { userId, page = 1, limit = 10, status, priority, search } = params;
     await this.authExternalService.validateUserExists(userId);
+    // Build AND conditions array
+    const andConditions: Prisma.TaskWhereInput[] = [
+      {
+        OR: [{ createdBy: userId }, { assignedTo: userId }],
+      },
+    ];
+
+    if (status) {
+      andConditions.push({ status: status as TaskStatus });
+    }
+
+    if (priority) {
+      andConditions.push({ priority: priority as TaskPriority });
+    }
+
+    if (search) {
+      andConditions.push({
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
     const where: Prisma.TaskWhereInput = {
-      OR: [{ createdBy: userId }, { assignedTo: userId }],
+      AND: andConditions,
     };
-    if (status) where.status = status as TaskStatus;
 
     const [tasks, total] = await this.taskRepository.findTasksByPage(
       page,

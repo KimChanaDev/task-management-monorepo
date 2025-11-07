@@ -14,9 +14,12 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "prisma:generate"],
       "cache": false,
       "persistent": true
+    },
+    "prisma:generate": {
+      "dependsOn": ["^prisma:generate"]
     }
   }
 }

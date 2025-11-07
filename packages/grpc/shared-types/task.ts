@@ -58,6 +58,8 @@ export interface GetUserTasksRequest {
   page: number;
   limit: number;
   status: string;
+  priority: string;
+  search: string;
 }
 
 export interface TaskResponse {
@@ -108,38 +110,38 @@ export interface TaskServiceClient {
 
 export interface TaskServiceController {
   createTask(
-    request: CreateTaskRequest,
+    request: CreateTaskRequest
   ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
   getTask(
-    request: GetTaskRequest,
+    request: GetTaskRequest
   ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
   getTasks(
-    request: GetTasksRequest,
+    request: GetTasksRequest
   ): Promise<TasksResponse> | Observable<TasksResponse> | TasksResponse;
 
   updateTask(
-    request: UpdateTaskRequest,
+    request: UpdateTaskRequest
   ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
   deleteTask(
-    request: DeleteTaskRequest,
+    request: DeleteTaskRequest
   ):
     | Promise<DeleteTaskResponse>
     | Observable<DeleteTaskResponse>
     | DeleteTaskResponse;
 
   assignTask(
-    request: AssignTaskRequest,
+    request: AssignTaskRequest
   ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
   updateTaskStatus(
-    request: UpdateTaskStatusRequest,
+    request: UpdateTaskStatusRequest
   ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
   getUserTasks(
-    request: GetUserTasksRequest,
+    request: GetUserTasksRequest
   ): Promise<TasksResponse> | Observable<TasksResponse> | TasksResponse;
 }
 
@@ -158,24 +160,24 @@ export function TaskServiceControllerMethods() {
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(
         constructor.prototype,
-        method,
+        method
       );
       GrpcMethod("TaskService", method)(
         constructor.prototype[method],
         method,
-        descriptor,
+        descriptor
       );
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(
         constructor.prototype,
-        method,
+        method
       );
       GrpcStreamMethod("TaskService", method)(
         constructor.prototype[method],
         method,
-        descriptor,
+        descriptor
       );
     }
   };

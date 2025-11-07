@@ -63,6 +63,8 @@ message GetUserTasksRequest {
   int32 page = 2;
   int32 limit = 3;
   string status = 4;
+  string priority = 5;
+  string search = 6;
 }
 
 message TaskResponse {

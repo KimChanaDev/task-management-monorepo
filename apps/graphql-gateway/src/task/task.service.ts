@@ -108,6 +108,8 @@ export class TaskService implements OnModuleInit {
       page: filter?.page || 0,
       limit: filter?.limit || 0,
       status: filter?.status?.toString() || '',
+      priority: filter?.priority?.toString() || '',
+      search: filter?.search || '',
     };
     return await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(this.taskService.getUserTasks(request));

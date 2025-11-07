@@ -1,7 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { TaskService } from './task.service';
-import { TaskDto } from './dto/task.dto';
+import { MyTasksDto, TaskDto } from './dto/task.dto';
 import {
   CreateTaskInput,
   UpdateTaskInput,
@@ -48,17 +48,20 @@ export class TaskResolver {
     return result.tasks as TaskDto[];
   }
 
-  @Query(() => [TaskDto])
+  @Query(() => MyTasksDto)
   @UseGuards(GqlAuthGuard)
   async myTasks(
     @CurrentUser() user: TokenPayload,
     @Args('filter', { nullable: true }) filter?: MyTaskFilterInput,
-  ): Promise<TaskDto[]> {
+  ): Promise<MyTasksDto> {
     const result: TasksResponse = await this.taskService.listMyTasks(
       user.sub,
       filter,
     );
-    return result.tasks as TaskDto[];
+    return {
+      tasks: result.tasks as TaskDto[],
+      total: result.total,
+    } as MyTasksDto;
   }
 
   @Mutation(() => TaskDto)
