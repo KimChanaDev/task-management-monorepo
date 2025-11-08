@@ -36,6 +36,22 @@ export const AUTH_QUERIES = {
 };
 
 export const TASK_QUERIES = {
+	GET_TASK: `
+		query GetTask ($id: ID!) {
+			task(id: $id) {
+				id
+				title
+				description
+				status
+				priority
+				dueDate
+				assignedTo
+				createdBy
+				createdAt
+				updatedAt
+			}
+		}
+	`,
 	GET_MY_TASKS: `
 		query MyTasks($filter: MyTaskFilterInput!) {
 			myTasks(filter: $filter) {
@@ -57,18 +73,18 @@ export const TASK_QUERIES = {
 	`,
 	GET_ALL_TASK: `
 		query AllTasks($filter: TaskFilterInput!) {
-		tasks(filter: $filter) {
-			id
-			title
-			description
-			status
-			priority
-			dueDate
-			assignedTo
-			createdBy
-			createdAt
-			updatedAt
-		}
+			tasks(filter: $filter) {
+				id
+				title
+				description
+				status
+				priority
+				dueDate
+				assignedTo
+				createdBy
+				createdAt
+				updatedAt
+			}
 		}
 	`,
 	CREATE_TASK: `

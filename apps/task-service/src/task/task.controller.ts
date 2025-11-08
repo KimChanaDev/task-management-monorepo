@@ -27,7 +27,7 @@ export class TaskController implements TaskServiceController {
   }
 
   async getTask(data: GetTaskRequest): Promise<TaskResponse> {
-    return await this.taskService.getTask(data.id);
+    return await this.taskService.getTask(data.id, data.userId);
   }
 
   async getTasks(data: GetTasksRequest): Promise<TasksResponse> {
@@ -39,7 +39,7 @@ export class TaskController implements TaskServiceController {
   }
 
   async deleteTask(data: DeleteTaskRequest) {
-    return this.taskService.deleteTask(data.id);
+    return this.taskService.deleteTask(data.id, data.userId);
   }
 
   async assignTask(data: AssignTaskRequest) {

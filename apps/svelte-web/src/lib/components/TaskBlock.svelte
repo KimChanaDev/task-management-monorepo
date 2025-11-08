@@ -26,7 +26,9 @@
 			</div>
 
 			{#if task.description}
-				<p class="text-gray-600 mb-3">{task.description}</p>
+				<p class="text-gray-600 mb-3">
+					{task.description.slice(0, 100)}{task.description.length > 100 && '...'}
+				</p>
 			{/if}
 
 			<div class="flex items-center gap-4 text-sm text-gray-500">

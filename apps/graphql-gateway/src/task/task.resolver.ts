@@ -37,9 +37,10 @@ export class TaskResolver {
   @Query(() => TaskDto, { nullable: true })
   @UseGuards(GqlAuthGuard)
   async task(
+    @CurrentUser() user: TokenPayload,
     @Args('id', { type: () => ID }) id: string,
   ): Promise<TaskDto | null> {
-    const result: TaskResponse = await this.taskService.getTask(id);
+    const result: TaskResponse = await this.taskService.getTask(id, user.sub);
     return result.task ? ({ ...result.task } as TaskDto) : null;
   }
 
@@ -70,17 +71,21 @@ export class TaskResolver {
 
   @Mutation(() => TaskDto)
   @UseGuards(GqlAuthGuard)
-  async updateTask(@Args('input') input: UpdateTaskInput): Promise<TaskDto> {
-    const result = await this.taskService.updateTask(input);
+  async updateTask(
+    @CurrentUser() user: TokenPayload,
+    @Args('input') input: UpdateTaskInput,
+  ): Promise<TaskDto> {
+    const result = await this.taskService.updateTask(input, user.sub);
     return result.task as TaskDto;
   }
 
   @Mutation(() => String)
   @UseGuards(GqlAuthGuard)
   async deleteTask(
+    @CurrentUser() user: TokenPayload,
     @Args('id', { type: () => ID }) id: string,
   ): Promise<string> {
-    const message: string = await this.taskService.deleteTask(id);
+    const message: string = await this.taskService.deleteTask(id, user.sub);
     return message;
   }
 

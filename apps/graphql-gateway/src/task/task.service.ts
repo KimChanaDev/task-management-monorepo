@@ -55,15 +55,18 @@ export class TaskService implements OnModuleInit {
     });
   }
 
-  async getTask(taskId: string): Promise<TaskResponse> {
-    const request: GetTaskRequest = { id: taskId };
+  async getTask(taskId: string, userId: string): Promise<TaskResponse> {
+    const request: GetTaskRequest = { id: taskId, userId };
     const result: TaskResponse = await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(this.taskGrpcService.getTask(request));
     });
     return result;
   }
 
-  async updateTask(input: UpdateTaskInput): Promise<TaskResponse> {
+  async updateTask(
+    input: UpdateTaskInput,
+    userId: string,
+  ): Promise<TaskResponse> {
     const request: UpdateTaskRequest = {
       id: input.id,
       title: input.title || '',
@@ -72,6 +75,7 @@ export class TaskService implements OnModuleInit {
       priority: input.priority?.toString() || '',
       dueDate: input.dueDate || '',
       assignedTo: input.assignedTo || '',
+      userId,
     };
     const result: TaskResponse = await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(this.taskGrpcService.updateTask(request));
@@ -79,8 +83,8 @@ export class TaskService implements OnModuleInit {
     return result;
   }
 
-  async deleteTask(taskId: string): Promise<string> {
-    const request: DeleteTaskRequest = { id: taskId };
+  async deleteTask(taskId: string, userId: string): Promise<string> {
+    const request: DeleteTaskRequest = { id: taskId, userId };
     const result: DeleteTaskResponse = await GrpcCall.callByHandlerException(
       () => {
         return firstValueFrom(this.taskGrpcService.deleteTask(request));

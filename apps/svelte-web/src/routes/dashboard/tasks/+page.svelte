@@ -5,6 +5,8 @@
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
 	import { toTitleCaseFromEnum } from '$utils';
 	import { TaskBlock } from '$components';
+	import { taskStore } from '$stores';
+
 	const client = getContextClient();
 
 	let tasks = $state<ITaskResponse[]>([]);
@@ -22,6 +24,7 @@
 	onMount(async () => {
 		await fetchTasks();
 	});
+
 	async function fetchTasks() {
 		isLoading = true;
 		try {
@@ -33,11 +36,11 @@
 				limit: pageSize
 			};
 			const result = await client.query(TASK_QUERIES.GET_MY_TASKS, { filter });
-			console.log('fetch task: ', result);
 
 			if (result.data?.myTasks) {
 				tasks = result.data.myTasks.tasks;
 				totalTasks = result.data.myTasks.total || tasks.length;
+				taskStore.setTasks(tasks);
 			}
 		} catch (error) {
 			console.error('Failed to fetch tasks:', error);
@@ -82,6 +85,7 @@
 
 			if (result.data?.deleteTask) {
 				tasks = tasks.filter((t) => t.id !== taskId);
+				taskStore.invalidate(taskId);
 			}
 		} catch (error) {
 			console.error('Failed to delete task:', error);

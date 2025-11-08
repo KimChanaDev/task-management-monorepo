@@ -44,9 +44,10 @@ export class TaskService {
     return { task: TaskLogic.formatTask(task) } as TaskResponse;
   }
 
-  async getTask(id: string): Promise<TaskResponse> {
+  async getTask(id: string, userId: string): Promise<TaskResponse> {
     this.logger.log(`Getting task: ${id}`);
-    TaskValidation.ensureGetTaskRequest(id);
+    TaskValidation.ensureGetTaskRequest(id, userId);
+    await this.authExternalService.validateUserExists(userId);
     const task: Prisma.TaskGetPayload<any> | null =
       await this.taskRepository.findTaskById(id);
     return {
@@ -77,8 +78,9 @@ export class TaskService {
   async updateTask(data: UpdateTaskRequest): Promise<TaskResponse> {
     this.logger.log(`Updating task: ${data.id}`);
     TaskValidation.ensureUpdateTaskRequest(data);
+    await this.authExternalService.validateUserExists(data.userId);
     const task: Prisma.TaskGetPayload<any> | null =
-      await this.taskRepository.findTaskById(data.id);
+      await this.taskRepository.findTaskById(data.id, data.userId);
     TaskValidation.ensureTaskFound(task, data.id);
     if (data.assignedTo) {
       await this.authExternalService.validateUserExists(data.assignedTo);
@@ -95,10 +97,11 @@ export class TaskService {
     return { task: TaskLogic.formatTask(updated) } as TaskResponse;
   }
 
-  async deleteTask(id: string): Promise<DeleteTaskResponse> {
+  async deleteTask(id: string, userId: string): Promise<DeleteTaskResponse> {
     this.logger.log(`Deleting task: ${id}`);
+    const createByMe = true;
     const task: Prisma.TaskGetPayload<any> | null =
-      await this.taskRepository.findTaskById(id);
+      await this.taskRepository.findTaskById(id, userId, createByMe);
     TaskValidation.ensureTaskFound(task, id);
     await this.taskRepository.deleteTaskById(id);
     return { message: 'Task deleted successfully' } as DeleteTaskResponse;

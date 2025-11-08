@@ -52,6 +52,9 @@ export class TaskValidation {
 
   static ensureUpdateTaskRequest(data: UpdateTaskRequest) {
     const errors: string[] = [];
+    if (!data.userId) {
+      errors.push('userId is required');
+    }
     if (data.priority && !this.ensureValidPriority(data.priority)) {
       errors.push(`priority: ${data.priority}`);
     }
@@ -69,9 +72,12 @@ export class TaskValidation {
     }
   }
 
-  static ensureGetTaskRequest(id: string) {
+  static ensureGetTaskRequest(id: string, userId: string) {
     if (!id) {
       throw new BadRequestRpcException('id is required');
+    }
+    if (!userId) {
+      throw new BadRequestRpcException('userId is required');
     }
   }
 

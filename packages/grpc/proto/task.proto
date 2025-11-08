@@ -26,6 +26,7 @@ message CreateTaskRequest {
 
 message GetTaskRequest {
   string id = 1;
+  string userId = 2;
 }
 
 message GetTasksRequest {
@@ -43,10 +44,12 @@ message UpdateTaskRequest {
   string status = 5;
   string dueDate = 6;
   string assignedTo = 7;
+  string userId = 8;
 }
 
 message DeleteTaskRequest {
   string id = 1;
+  string userId = 2;
 }
 
 message AssignTaskRequest {

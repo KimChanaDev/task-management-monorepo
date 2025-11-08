@@ -13,10 +13,28 @@ export class TaskRepository {
   private readonly logger = new Logger(TaskRepository.name);
   constructor(private readonly prisma: PrismaService) {}
 
-  async findTaskById(id: string): Promise<Prisma.TaskGetPayload<any> | null> {
+  async findTaskById(
+    id: string,
+    userId: string | undefined = undefined,
+    createdByOnly: boolean = false,
+  ): Promise<Prisma.TaskGetPayload<any> | null> {
     try {
+      const baseWhere: Prisma.TaskWhereInput = { id };
+      const ownTaskCondition = createdByOnly
+        ? [{ createdBy: userId }]
+        : [{ createdBy: userId }, { assignedTo: userId }];
+      const where: Prisma.TaskWhereInput = userId
+        ? {
+            AND: [
+              baseWhere,
+              {
+                OR: ownTaskCondition,
+              },
+            ],
+          }
+        : baseWhere;
       const task: Prisma.TaskGetPayload<any> | null =
-        await this.prisma.task.findUnique({ where: { id } });
+        await this.prisma.task.findFirst({ where });
       return task;
     } catch (error) {
       this.logger.error(`Failed to get task ${id}: ${error.message}`);

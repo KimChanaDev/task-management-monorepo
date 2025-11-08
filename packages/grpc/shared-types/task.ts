@@ -20,6 +20,7 @@ export interface CreateTaskRequest {
 
 export interface GetTaskRequest {
   id: string;
+  userId: string;
 }
 
 export interface GetTasksRequest {
@@ -37,10 +38,12 @@ export interface UpdateTaskRequest {
   status: string;
   dueDate: string;
   assignedTo: string;
+  userId: string;
 }
 
 export interface DeleteTaskRequest {
   id: string;
+  userId: string;
 }
 
 export interface AssignTaskRequest {
