@@ -47,6 +47,60 @@ export class TaskRepository {
     }
   }
 
+  async findRecentTasksAndStat(userId: string, limit: number) {
+    try {
+      const baseUserWhere: Prisma.TaskWhereInput = {
+        OR: [{ createdBy: userId }, { assignedTo: userId }],
+      };
+
+      // Helper function to create status-specific where clause
+      const createStatusWhere = (
+        status: TaskStatus,
+      ): Prisma.TaskWhereInput => ({
+        AND: [baseUserWhere, { status }],
+      });
+
+      const [
+        recentTasks,
+        total,
+        todoCount,
+        inProgressCount,
+        reviewCount,
+        completedCount,
+        canceledCount,
+      ] = await Promise.all([
+        this.prisma.task.findMany({
+          where: baseUserWhere,
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+        }),
+        this.prisma.task.count({ where: baseUserWhere }),
+        this.prisma.task.count({ where: createStatusWhere(TaskStatus.TODO) }),
+        this.prisma.task.count({
+          where: createStatusWhere(TaskStatus.IN_PROGRESS),
+        }),
+        this.prisma.task.count({ where: createStatusWhere(TaskStatus.REVIEW) }),
+        this.prisma.task.count({ where: createStatusWhere(TaskStatus.DONE) }),
+        this.prisma.task.count({
+          where: createStatusWhere(TaskStatus.CANCELLED),
+        }),
+      ]);
+
+      return {
+        recentTasks,
+        total,
+        todoCount,
+        inProgressCount,
+        reviewCount,
+        completedCount,
+        cancelledCount: canceledCount,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get tasks: ${error.message}`);
+      throw new InternalRpcException(`Failed to get tasks: ${error.message}`);
+    }
+  }
+
   async deleteTaskById(id: string): Promise<void> {
     try {
       await this.prisma.task.delete({ where: { id } });

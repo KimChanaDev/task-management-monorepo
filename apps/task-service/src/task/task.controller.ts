@@ -13,6 +13,8 @@ import {
   TasksResponse,
   UpdateTaskRequest,
   UpdateTaskStatusRequest,
+  GetDashboardDataRequest,
+  GetDashboardDataResponse,
 } from '@repo/grpc/task';
 
 @Controller()
@@ -50,5 +52,11 @@ export class TaskController implements TaskServiceController {
 
   async getUserTasks(data: GetUserTasksRequest) {
     return this.taskService.getUserTasks(data);
+  }
+
+  async getDashboardData(
+    data: GetDashboardDataRequest,
+  ): Promise<GetDashboardDataResponse> {
+    return this.taskService.getDashboardData(data);
   }
 }

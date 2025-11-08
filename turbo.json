@@ -14,12 +14,15 @@
       "dependsOn": ["^check-types"]
     },
     "dev": {
-      "dependsOn": ["^build", "prisma:generate"],
+      "dependsOn": ["generate-ts-proto", "prisma:generate", "^build"],
       "cache": false,
       "persistent": true
     },
     "prisma:generate": {
       "dependsOn": ["^prisma:generate"]
+    },
+    "generate-ts-proto": {
+      "dependsOn": ["^generate-ts-proto"]
     }
   }
 }

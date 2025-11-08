@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { Injectable, Logger } from '@nestjs/common';
 import {
   TaskStatus,
@@ -14,6 +15,8 @@ import {
   TasksResponse,
   UpdateTaskRequest,
   UpdateTaskStatusRequest,
+  GetDashboardDataRequest,
+  GetDashboardDataResponse,
 } from '@repo/grpc/task';
 import { TaskLogic } from './task.logic';
 import { TaskRepository } from './task.repository';
@@ -169,5 +172,26 @@ export class TaskService {
       page,
       limit,
     };
+  }
+
+  async getDashboardData(
+    data: GetDashboardDataRequest,
+  ): Promise<GetDashboardDataResponse> {
+    TaskValidation.ensureGetDashboardDataRequest(data);
+    const { userId, recentTasksLimit } = data;
+    await this.authExternalService.validateUserExists(userId);
+    const stats = await this.taskRepository.findRecentTasksAndStat(
+      userId,
+      recentTasksLimit,
+    );
+    return {
+      recentTasks: stats.recentTasks.map((task) => TaskLogic.formatTask(task)),
+      totalCount: stats.total,
+      todoCount: stats.todoCount,
+      inProgressCount: stats.inProgressCount,
+      reviewCount: stats.reviewCount,
+      completedCount: stats.completedCount,
+      cancelledCount: stats.cancelledCount,
+    } as GetDashboardDataResponse;
   }
 }

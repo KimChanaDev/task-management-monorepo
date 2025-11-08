@@ -6,6 +6,8 @@ import {
   CreateTaskRequest,
   DeleteTaskRequest,
   DeleteTaskResponse,
+  GetDashboardDataRequest,
+  GetDashboardDataResponse,
   GetTaskRequest,
   GetTasksRequest,
   GetUserTasksRequest,
@@ -26,12 +28,12 @@ import { GrpcCall } from 'src/utilities/grpc-call.handler';
 
 @Injectable()
 export class TaskService implements OnModuleInit {
-  private taskService: TaskServiceClient;
+  private taskGrpcService: TaskServiceClient;
 
   constructor(@Inject(ProtoPackage.TASK) private client: ClientGrpc) {}
 
   onModuleInit() {
-    this.taskService =
+    this.taskGrpcService =
       this.client.getService<TaskServiceClient>(TASK_SERVICE_NAME);
   }
 
@@ -49,14 +51,14 @@ export class TaskService implements OnModuleInit {
       assignedTo: input.assignedTo || '',
     };
     return await GrpcCall.callByHandlerException(() => {
-      return firstValueFrom(this.taskService.createTask(request));
+      return firstValueFrom(this.taskGrpcService.createTask(request));
     });
   }
 
   async getTask(taskId: string): Promise<TaskResponse> {
     const request: GetTaskRequest = { id: taskId };
     const result: TaskResponse = await GrpcCall.callByHandlerException(() => {
-      return firstValueFrom(this.taskService.getTask(request));
+      return firstValueFrom(this.taskGrpcService.getTask(request));
     });
     return result;
   }
@@ -72,7 +74,7 @@ export class TaskService implements OnModuleInit {
       assignedTo: input.assignedTo || '',
     };
     const result: TaskResponse = await GrpcCall.callByHandlerException(() => {
-      return firstValueFrom(this.taskService.updateTask(request));
+      return firstValueFrom(this.taskGrpcService.updateTask(request));
     });
     return result;
   }
@@ -81,7 +83,7 @@ export class TaskService implements OnModuleInit {
     const request: DeleteTaskRequest = { id: taskId };
     const result: DeleteTaskResponse = await GrpcCall.callByHandlerException(
       () => {
-        return firstValueFrom(this.taskService.deleteTask(request));
+        return firstValueFrom(this.taskGrpcService.deleteTask(request));
       },
     );
     return result.message;
@@ -95,7 +97,7 @@ export class TaskService implements OnModuleInit {
       priority: filter?.priority?.toString() || '',
     };
     return await GrpcCall.callByHandlerException(() => {
-      return firstValueFrom(this.taskService.getTasks(request));
+      return firstValueFrom(this.taskGrpcService.getTasks(request));
     });
   }
 
@@ -112,17 +114,31 @@ export class TaskService implements OnModuleInit {
       search: filter?.search || '',
     };
     return await GrpcCall.callByHandlerException(() => {
-      return firstValueFrom(this.taskService.getUserTasks(request));
+      return firstValueFrom(this.taskGrpcService.getUserTasks(request));
     });
   }
 
   async assignTask(taskId: string, assignedTo: string): Promise<TaskResponse> {
     return await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(
-        this.taskService.assignTask({
+        this.taskGrpcService.assignTask({
           id: taskId,
           assignedTo,
         } as AssignTaskRequest),
+      );
+    });
+  }
+
+  async dashboard(
+    userId: string,
+    limit: number,
+  ): Promise<GetDashboardDataResponse> {
+    return await GrpcCall.callByHandlerException(() => {
+      return firstValueFrom(
+        this.taskGrpcService.getDashboardData({
+          userId,
+          recentTasksLimit: limit,
+        } as GetDashboardDataRequest),
       );
     });
   }

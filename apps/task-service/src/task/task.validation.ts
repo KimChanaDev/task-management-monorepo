@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { TaskPriority, TaskStatus } from '@prisma/client/task-service/index.js';
 import {
   BadRequestRpcException,
@@ -5,6 +6,7 @@ import {
 } from '@repo/grpc/exception';
 import {
   CreateTaskRequest,
+  GetDashboardDataRequest,
   GetTasksRequest,
   GetUserTasksRequest,
   UpdateTaskRequest,
@@ -135,6 +137,18 @@ export class TaskValidation {
     }
     if (errors.length > 0) {
       throw new BadRequestRpcException(`Invalid request: ${errors.join(', ')}`);
+    }
+    return true;
+  }
+
+  static ensureGetDashboardDataRequest(params: GetDashboardDataRequest) {
+    if (!params.userId) {
+      throw new BadRequestRpcException('userId is required');
+    }
+    if (params.recentTasksLimit < 1) {
+      throw new BadRequestRpcException(
+        'recentTasksLimit must be a positive integer',
+      );
     }
     return true;
   }

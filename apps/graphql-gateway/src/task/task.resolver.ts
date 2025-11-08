@@ -1,7 +1,7 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { TaskService } from './task.service';
-import { MyTasksDto, TaskDto } from './dto/task.dto';
+import { DashboardDto, MyTasksDto, TaskDto } from './dto/task.dto';
 import {
   CreateTaskInput,
   UpdateTaskInput,
@@ -10,7 +10,11 @@ import {
 } from './dto/task.input';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { TaskResponse, TasksResponse } from '@repo/grpc/task';
+import {
+  GetDashboardDataResponse,
+  TaskResponse,
+  TasksResponse,
+} from '@repo/grpc/task';
 import { type TokenPayload } from '@repo/grpc/auth';
 
 @Resolver()
@@ -91,5 +95,18 @@ export class TaskResolver {
       assignedTo,
     );
     return result.task as TaskDto;
+  }
+
+  @Query(() => DashboardDto)
+  @UseGuards(GqlAuthGuard)
+  async dashboard(
+    @CurrentUser() user: TokenPayload,
+    @Args('limit', { type: () => Int }) limit: number,
+  ): Promise<DashboardDto> {
+    const result: GetDashboardDataResponse = await this.taskService.dashboard(
+      user.sub,
+      limit,
+    );
+    return result as DashboardDto;
   }
 }

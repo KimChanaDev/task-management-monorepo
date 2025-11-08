@@ -41,3 +41,21 @@ export class MyTasksDto {
   @Field()
   total: number;
 }
+
+@ObjectType()
+export class DashboardDto {
+  @Field(() => [TaskDto])
+  recentTasks: TaskDto[];
+  @Field()
+  totalCount: number;
+  @Field()
+  todoCount: number;
+  @Field()
+  inProgressCount: number;
+  @Field()
+  reviewCount: number;
+  @Field()
+  completedCount: number;
+  @Field()
+  cancelledCount: number;
+}

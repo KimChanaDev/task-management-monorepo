@@ -11,6 +11,7 @@ service TaskService {
   rpc AssignTask(AssignTaskRequest) returns (TaskResponse);
   rpc UpdateTaskStatus(UpdateTaskStatusRequest) returns (TaskResponse);
   rpc GetUserTasks(GetUserTasksRequest) returns (TasksResponse);
+  rpc GetDashboardData(GetDashboardDataRequest) returns (GetDashboardDataResponse);
 }
 
 message CreateTaskRequest {
@@ -93,4 +94,19 @@ message Task {
   string assignedTo = 8;
   string createdAt = 9;
   string updatedAt = 10;
+}
+
+message GetDashboardDataRequest {
+  string userId = 1;
+  int32 recentTasksLimit = 2;
+}
+
+message GetDashboardDataResponse {
+  repeated Task recentTasks = 1;
+  int32 totalCount = 2;
+  int32 todoCount = 3;
+  int32 inProgressCount = 4;
+  int32 reviewCount = 5;
+  int32 completedCount = 6;
+  int32 cancelledCount = 7;
 }

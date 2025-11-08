@@ -191,22 +191,27 @@ Get tasks where the current user is either creator or assignee:
 ```graphql
 query MyTasks {
   myTasks(
-    filter: {
-      status: TODO, //optional
-      page: 1, //optional, default 1
-      limit: 10 //optional, default 10
+      filter: {
+        status: TODO, //optional
+        priority: MEDIUM, //optional
+	      search: '', //optional
+        page: 1,
+        limit: 10
     }
   ) {
-    id
-    title
-    description
-    status
-    priority
-    dueDate
-    assignedTo
-    createdBy
-    createdAt
-    updatedAt
+    tasks {
+      id
+      title
+      description
+      status
+      priority
+      dueDate
+      assignedTo
+      createdBy
+      createdAt
+      updatedAt
+    }
+    total
   }
 }
 ```

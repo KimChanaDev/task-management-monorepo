@@ -123,6 +123,30 @@ export const TASK_QUERIES = {
 				updatedAt
 			}
 		}
+	`,
+	DASHBOARD_QUERY: `
+		query GetDashboardData($limit: Int!) {
+			dashboard(limit: $limit) {
+				recentTasks {
+					id
+					title
+					description
+					status
+					priority
+					dueDate
+					assignedTo
+					createdBy
+					createdAt
+					updatedAt
+				}
+				totalCount
+				todoCount
+				inProgressCount
+				reviewCount
+				completedCount
+				cancelledCount
+			}
+		}
 	`
 };
 
