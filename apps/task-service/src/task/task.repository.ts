@@ -19,7 +19,7 @@ export class TaskRepository {
     createdByOnly: boolean = false,
   ): Promise<Prisma.TaskGetPayload<any> | null> {
     try {
-      const baseWhere: Prisma.TaskWhereInput = { id };
+      const baseWhere: Prisma.TaskWhereInput = { id, isDeleted: false };
       const ownTaskCondition = createdByOnly
         ? [{ createdBy: userId }]
         : [{ createdBy: userId }, { assignedTo: userId }];
@@ -68,7 +68,10 @@ export class TaskRepository {
   async findRecentTasksAndStat(userId: string, limit: number) {
     try {
       const baseUserWhere: Prisma.TaskWhereInput = {
-        OR: [{ createdBy: userId }, { assignedTo: userId }],
+        AND: [
+          { OR: [{ createdBy: userId }, { assignedTo: userId }] },
+          { isDeleted: false },
+        ],
       };
 
       // Helper function to create status-specific where clause
@@ -121,7 +124,10 @@ export class TaskRepository {
 
   async deleteTaskById(id: string): Promise<void> {
     try {
-      await this.prisma.task.delete({ where: { id } });
+      await this.prisma.task.update({
+        where: { id },
+        data: { isDeleted: true },
+      });
     } catch (error) {
       this.logger.error(`Failed to delete task ${id}: ${error.message}`);
       throw new InternalRpcException(`Failed to delete task: ${error.message}`);
@@ -135,7 +141,7 @@ export class TaskRepository {
     try {
       const updated: Prisma.TaskGetPayload<any> = await this.prisma.task.update(
         {
-          where: { id },
+          where: { id, isDeleted: false },
           data: updateData,
         },
       );

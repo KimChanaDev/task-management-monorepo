@@ -73,7 +73,9 @@ export class TaskService {
   async getTasks(params: GetTasksRequest): Promise<TasksResponse> {
     TaskValidation.ensureGetTasksRequest(params);
     const { page = 1, limit = 10, status, priority } = params;
-    const where: Prisma.TaskWhereInput = {};
+    const where: Prisma.TaskWhereInput = {
+      isDeleted: false,
+    };
     if (status) where.status = status as TaskStatus;
     if (priority) where.priority = priority as TaskPriority;
     const [tasks, total] = await this.taskRepository.findTasksByPage(
@@ -182,6 +184,7 @@ export class TaskService {
       {
         OR: [{ createdBy: userId }, { assignedTo: userId }],
       },
+      { isDeleted: false },
     ];
 
     if (status) {

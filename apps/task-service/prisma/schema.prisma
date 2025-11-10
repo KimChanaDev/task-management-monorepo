@@ -34,6 +34,7 @@ model Task {
   assignedTo  String?
   createdAt   DateTime     @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+  isDeleted   Boolean      @default(false)
 
   @@index([createdBy])
   @@index([assignedTo])
