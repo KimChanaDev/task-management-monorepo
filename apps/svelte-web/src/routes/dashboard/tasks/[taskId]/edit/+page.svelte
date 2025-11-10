@@ -93,7 +93,6 @@
 			const data = await client.mutation(TASK_QUERIES.UPDATE_TASK, {
 				updateTaskInput: updateInput
 			});
-			console.log('data: ', data);
 
 			if (data.data?.updateTask) {
 				taskStore.setTask(data.data.updateTask);
@@ -115,14 +114,14 @@
 	}
 </script>
 
-<div class="max-w-4xl mx-auto p-6">
+<div class="max-w-4xl mx-auto p-3 sm:p-4 md:p-6">
 	<!-- Header with back button -->
-	<div class="mb-6">
+	<div class="mb-4 sm:mb-6">
 		<a
 			href="/dashboard/tasks/{taskId}"
-			class="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors mb-4"
+			class="inline-flex items-center gap-1.5 sm:gap-2 text-indigo-600 hover:text-indigo-800 transition-colors mb-3 sm:mb-4 text-sm sm:text-base"
 		>
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path
 					stroke-linecap="round"
 					stroke-linejoin="round"
@@ -132,37 +131,48 @@
 			</svg>
 			Back to Task Details
 		</a>
-		<h1 class="text-3xl font-bold text-gray-900">Edit Task</h1>
+		<h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Edit Task</h1>
 	</div>
 
 	{#if loading}
 		<div class="flex items-center justify-center py-12">
-			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+			<div
+				class="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-indigo-600"
+			></div>
 		</div>
 	{:else if error && !task}
-		<div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+		<div
+			class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 sm:px-6 sm:py-4 rounded-lg text-sm sm:text-base"
+		>
 			<p class="font-medium">Error</p>
 			<p class="mt-1">{error}</p>
 		</div>
 	{:else if task}
-		<div class="bg-white shadow-lg rounded-xl p-8">
+		<div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 md:p-8">
 			{#if error}
-				<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+				<div
+					class="bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg mb-4 sm:mb-6 text-sm sm:text-base"
+				>
 					<p class="font-medium">Error</p>
 					<p class="mt-1">{error}</p>
 				</div>
 			{/if}
 
 			{#if successMessage}
-				<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+				<div
+					class="bg-green-50 border border-green-200 text-green-700 px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg mb-4 sm:mb-6 text-sm sm:text-base"
+				>
 					<p class="font-medium">{successMessage}</p>
 				</div>
 			{/if}
 
 			<form onsubmit={handleSubmit}>
 				<!-- Title -->
-				<div class="mb-6">
-					<label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+				<div class="mb-4 sm:mb-6">
+					<label
+						for="title"
+						class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
+					>
 						Title <span class="text-red-500">*</span>
 					</label>
 					<input
@@ -171,13 +181,16 @@
 						bind:value={title}
 						required
 						placeholder="Enter task title"
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+						class="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
 					/>
 				</div>
 
 				<!-- Description -->
-				<div class="mb-6">
-					<label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+				<div class="mb-4 sm:mb-6">
+					<label
+						for="description"
+						class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
+					>
 						Description
 					</label>
 					<textarea
@@ -185,20 +198,23 @@
 						bind:value={description}
 						rows="5"
 						placeholder="Enter task description"
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
+						class="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
 					></textarea>
 				</div>
 
 				<!-- Status and Priority -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
 					<div>
-						<label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+						<label
+							for="status"
+							class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
+						>
 							Status
 						</label>
 						<select
 							id="status"
 							bind:value={status}
-							class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+							class="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
 						>
 							{#each Object.values(TASK_STATUS) as value}
 								<option {value}>{toTitleCaseFromEnum(value)}</option>
@@ -207,13 +223,16 @@
 					</div>
 
 					<div>
-						<label for="priority" class="block text-sm font-medium text-gray-700 mb-2">
+						<label
+							for="priority"
+							class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
+						>
 							Priority
 						</label>
 						<select
 							id="priority"
 							bind:value={priority}
-							class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+							class="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
 						>
 							{#each Object.values(TASK_PRIORITY) as value}
 								<option {value}>{toTitleCaseFromEnum(value)}</option>
@@ -223,21 +242,27 @@
 				</div>
 
 				<!-- Due Date and Assigned To -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
 					<div>
-						<label for="dueDate" class="block text-sm font-medium text-gray-700 mb-2">
+						<label
+							for="dueDate"
+							class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
+						>
 							Due Date
 						</label>
 						<input
 							type="datetime-local"
 							id="dueDate"
 							bind:value={dueDate}
-							class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+							class="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
 						/>
 					</div>
 
 					<div>
-						<label for="assignedTo" class="block text-sm font-medium text-gray-700 mb-2">
+						<label
+							for="assignedTo"
+							class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
+						>
 							Assigned To
 						</label>
 						<input
@@ -245,21 +270,23 @@
 							id="assignedTo"
 							bind:value={assignedTo}
 							placeholder="User ID"
-							class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+							class="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
 						/>
 					</div>
 				</div>
 
 				<!-- Form Actions -->
-				<div class="flex items-center gap-4 pt-6 border-t border-gray-200">
+				<div
+					class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200"
+				>
 					<button
 						type="submit"
 						disabled={submitting}
-						class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+						class="px-5 py-2.5 sm:px-6 sm:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
 					>
 						{#if submitting}
 							<svg
-								class="animate-spin h-5 w-5"
+								class="animate-spin h-4 w-4 sm:h-5 sm:w-5"
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"
 								viewBox="0 0 24 24"
@@ -280,7 +307,12 @@
 							</svg>
 							Updating...
 						{:else}
-							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<svg
+								class="w-4 h-4 sm:w-5 sm:h-5"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
@@ -294,7 +326,7 @@
 
 					<a
 						href="/dashboard/tasks/{taskId}"
-						class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+						class="px-5 py-2.5 sm:px-6 sm:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-center text-sm sm:text-base"
 					>
 						Cancel
 					</a>

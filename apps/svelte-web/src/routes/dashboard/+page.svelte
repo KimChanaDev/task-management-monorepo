@@ -43,9 +43,9 @@
 	});
 </script>
 
-<div class="space-y-6">
+<div class="space-y-4 sm:space-y-6">
 	<!-- Stats Grid -->
-	<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+	<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
 		<StatLabel
 			d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
 			head="Total Tasks"
@@ -85,12 +85,12 @@
 	</div>
 
 	<!-- Recent Tasks -->
-	<div class="bg-white rounded-xl shadow-sm border border-gray-100">
-		<div class="px-6 py-4 border-b border-gray-200">
-			<h3 class="text-lg font-semibold text-gray-900">Recent Tasks</h3>
+	<div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
+		<div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+			<h3 class="text-base sm:text-lg font-semibold text-gray-900">Recent Tasks</h3>
 		</div>
 
-		<div class="p-6">
+		<div class="p-4 sm:p-6">
 			{#if loading}
 				<div class="flex justify-center py-8">
 					<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

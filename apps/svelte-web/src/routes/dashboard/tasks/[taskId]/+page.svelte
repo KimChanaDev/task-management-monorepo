@@ -92,14 +92,14 @@
 	}
 </script>
 
-<div class="max-w-5xl mx-auto p-6">
+<div class="max-w-5xl mx-auto p-3 sm:p-4 md:p-6">
 	<!-- Header with back button -->
-	<div class="mb-6">
+	<div class="mb-4 sm:mb-6">
 		<a
 			href="/dashboard/tasks"
-			class="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition-colors mb-4"
+			class="inline-flex items-center gap-1.5 sm:gap-2 text-indigo-600 hover:text-indigo-800 transition-colors mb-3 sm:mb-4 text-sm sm:text-base"
 		>
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path
 					stroke-linecap="round"
 					stroke-linejoin="round"
@@ -113,31 +113,44 @@
 
 	{#if loading}
 		<div class="flex items-center justify-center py-12">
-			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+			<div
+				class="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-indigo-600"
+			></div>
 		</div>
 	{:else if error}
-		<div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+		<div
+			class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 sm:px-6 sm:py-4 rounded-lg text-sm sm:text-base"
+		>
 			<p class="font-medium">Error</p>
 			<p class="mt-1">{error}</p>
 		</div>
 	{:else if task}
 		<div class="bg-white shadow-lg rounded-xl overflow-hidden">
 			<!-- Task Header -->
-			<div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-6">
-				<div class="flex items-start justify-between">
-					<div class="flex-1">
-						<h1 class="text-3xl font-bold text-white mb-3">{task.title}</h1>
-						<div class="flex items-center gap-3">
+			<div
+				class="bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6"
+			>
+				<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+					<div class="flex-1 min-w-0">
+						<h1 class="text-2xl sm:text-3xl font-bold text-white mb-2 sm:mb-3 break-words">
+							{task.title}
+						</h1>
+						<div class="flex flex-wrap items-center gap-2">
 							<TaskTag taskStatus={task.status} />
 							<TaskTag taskPriority={task.priority} />
 						</div>
 					</div>
-					<div class="flex items-center gap-2">
+					<div class="flex items-center gap-1.5 sm:gap-2 justify-end sm:justify-start">
 						<a
 							href="/dashboard/tasks/{task.id}/edit"
-							class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium inline-flex items-center gap-2"
+							class="px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium inline-flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
 						>
-							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<svg
+								class="w-4 h-4 sm:w-5 sm:h-5"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
@@ -145,14 +158,19 @@
 									d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
 								/>
 							</svg>
-							Edit
+							<span class="hidden sm:inline">Edit</span>
 						</a>
 						<button
 							onclick={handleDelete}
 							disabled={deleteLoading}
-							class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+							class="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium inline-flex items-center gap-1.5 sm:gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
 						>
-							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<svg
+								class="w-4 h-4 sm:w-5 sm:h-5"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
 								<path
 									stroke-linecap="round"
 									stroke-linejoin="round"
@@ -160,35 +178,41 @@
 									d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
 								/>
 							</svg>
-							{deleteLoading ? 'Deleting...' : 'Delete'}
+							<span class="hidden sm:inline">{deleteLoading ? 'Deleting...' : 'Delete'}</span>
 						</button>
 					</div>
 				</div>
 			</div>
 
 			<!-- Task Details -->
-			<div class="px-8 py-6">
+			<div class="px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6">
 				<!-- Description -->
-				<div class="mb-6">
-					<h2 class="text-xl font-semibold text-gray-900 mb-3">Description</h2>
+				<div class="mb-4 sm:mb-6">
+					<h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">Description</h2>
 					{#if task.description}
-						<p class="text-gray-700 leading-relaxed whitespace-pre-wrap">{task.description}</p>
+						<p
+							class="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap break-words"
+						>
+							{task.description}
+						</p>
 					{:else}
-						<p class="text-gray-400 italic">No description provided</p>
+						<p class="text-sm sm:text-base text-gray-400 italic">No description provided</p>
 					{/if}
 				</div>
 
 				<!-- Task Info Grid -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 pt-6">
+				<div
+					class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 border-t border-gray-200 pt-4 sm:pt-6"
+				>
 					<div>
-						<h3 class="text-sm font-medium text-gray-500 mb-2">Status</h3>
+						<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">Status</h3>
 						<div class="flex items-center gap-2">
 							<TaskTag taskStatus={task.status} />
 						</div>
 					</div>
 
 					<div>
-						<h3 class="text-sm font-medium text-gray-500 mb-2">Priority</h3>
+						<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">Priority</h3>
 						<div class="flex items-center gap-2">
 							<TaskTag taskPriority={task.priority} />
 						</div>
@@ -196,10 +220,10 @@
 
 					{#if task.dueDate}
 						<div>
-							<h3 class="text-sm font-medium text-gray-500 mb-2">Due Date</h3>
-							<p class="text-gray-900 flex items-center gap-2">
+							<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">Due Date</h3>
+							<p class="text-sm sm:text-base text-gray-900 flex items-center gap-1.5 sm:gap-2">
 								<svg
-									class="w-5 h-5 text-gray-400"
+									class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -211,17 +235,19 @@
 										d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
 									/>
 								</svg>
-								{formatDate(task.dueDate)}
+								<span class="truncate">{formatDate(task.dueDate)}</span>
 							</p>
 						</div>
 					{/if}
 
 					{#if task.assignedTo}
 						<div>
-							<h3 class="text-sm font-medium text-gray-500 mb-2">Assigned To</h3>
-							<p class="text-gray-900 flex items-center gap-2">
+							<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">
+								Assigned To
+							</h3>
+							<p class="text-sm sm:text-base text-gray-900 flex items-center gap-1.5 sm:gap-2">
 								<svg
-									class="w-5 h-5 text-gray-400"
+									class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -233,16 +259,16 @@
 										d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
 									/>
 								</svg>
-								{task.assignedTo}
+								<span class="truncate">{task.assignedTo}</span>
 							</p>
 						</div>
 					{/if}
 
 					<div>
-						<h3 class="text-sm font-medium text-gray-500 mb-2">Created By</h3>
-						<p class="text-gray-900 flex items-center gap-2">
+						<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">Created By</h3>
+						<p class="text-sm sm:text-base text-gray-900 flex items-center gap-1.5 sm:gap-2">
 							<svg
-								class="w-5 h-5 text-gray-400"
+								class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -254,15 +280,15 @@
 									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
 								/>
 							</svg>
-							{task.createdBy}
+							<span class="truncate">{task.createdBy}</span>
 						</p>
 					</div>
 
 					<div>
-						<h3 class="text-sm font-medium text-gray-500 mb-2">Created At</h3>
-						<p class="text-gray-900 flex items-center gap-2">
+						<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">Created At</h3>
+						<p class="text-sm sm:text-base text-gray-900 flex items-center gap-1.5 sm:gap-2">
 							<svg
-								class="w-5 h-5 text-gray-400"
+								class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -274,15 +300,17 @@
 									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
 								/>
 							</svg>
-							{formatDate(task.createdAt)}
+							<span class="truncate">{formatDate(task.createdAt)}</span>
 						</p>
 					</div>
 
 					<div>
-						<h3 class="text-sm font-medium text-gray-500 mb-2">Last Updated</h3>
-						<p class="text-gray-900 flex items-center gap-2">
+						<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">
+							Last Updated
+						</h3>
+						<p class="text-sm sm:text-base text-gray-900 flex items-center gap-1.5 sm:gap-2">
 							<svg
-								class="w-5 h-5 text-gray-400"
+								class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -294,7 +322,7 @@
 									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
 								/>
 							</svg>
-							{formatDate(task.updatedAt)}
+							<span class="truncate">{formatDate(task.updatedAt)}</span>
 						</p>
 					</div>
 				</div>

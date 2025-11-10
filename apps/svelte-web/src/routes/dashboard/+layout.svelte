@@ -19,10 +19,10 @@
 	<Sidebar {user} bind:sidebarOpen />
 
 	<!-- Main Content -->
-	<div class="lg:pl-64">
+	<div class="lg:pl-64 min-h-screen">
 		<DashboardTopbar bind:sidebarOpen />
 		<!-- Page Content -->
-		<main class="p-6">
+		<main class="p-3 sm:p-4 md:p-6 lg:p-8">
 			{@render children()}
 		</main>
 	</div>
