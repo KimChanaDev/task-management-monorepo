@@ -54,6 +54,7 @@ services:
     image: apachepulsar/pulsar:4.1.1
     container_name: task-platform-pulsar
     command: bin/pulsar standalone
+    restart: on-failure
     ports:
       - '6650:6650' # Pulsar broker
       - '8080:8080' # Pulsar admin
@@ -140,7 +141,3 @@ volumes:
   minio_data:
   prometheus_data:
   grafana_data:
-
-networks:
-  default:
-    name: task-platform-network

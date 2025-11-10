@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { Injectable, Logger } from '@nestjs/common';
 import {
   TaskStatus,
@@ -22,6 +21,12 @@ import { TaskLogic } from './task.logic';
 import { TaskRepository } from './task.repository';
 import { AuthExternalService } from './external-services/auth.external-service';
 import { TaskValidation } from './task.validation';
+import { PulsarService } from '../events/services/pulsar.service';
+import {
+  TaskCreatedEvent,
+  TaskUpdatedEvent,
+  TaskDeletedEvent,
+} from '../events/types/task-events.type';
 
 @Injectable()
 export class TaskService {
@@ -30,6 +35,7 @@ export class TaskService {
   constructor(
     private readonly taskRepository: TaskRepository,
     private readonly authExternalService: AuthExternalService,
+    private readonly pulsarService: PulsarService,
   ) {}
 
   async createTask(data: CreateTaskRequest): Promise<TaskResponse> {
@@ -41,6 +47,15 @@ export class TaskService {
     }
     const task: Prisma.TaskGetPayload<any> =
       await this.taskRepository.createTask(data);
+    try {
+      const event: TaskCreatedEvent = TaskLogic.mapCreateTaskEvent(
+        task,
+        data.createdBy,
+      );
+      await this.pulsarService.publishTaskEvent(event);
+    } catch (error) {
+      this.logger.error('Failed to publish TaskCreated event', error);
+    }
     return { task: TaskLogic.formatTask(task) } as TaskResponse;
   }
 
@@ -85,15 +100,33 @@ export class TaskService {
     if (data.assignedTo) {
       await this.authExternalService.validateUserExists(data.assignedTo);
     }
+    const before = TaskLogic.mapTaskUpdateDetailsObject(task!);
     const updateData: Prisma.TaskUpdateInput = {
-      title: data.title || undefined,
-      description: data.description || undefined,
-      priority: (data.priority as TaskPriority) || undefined,
-      status: (data.status as TaskStatus) || undefined,
-      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-      assignedTo: data.assignedTo || undefined,
+      title: data.title,
+      description: data.description || null,
+      priority: data.priority as TaskPriority,
+      status: data.status as TaskStatus,
+      dueDate: data.dueDate ? new Date(data.dueDate) : null,
+      assignedTo: data.assignedTo || null,
     };
     const updated = await this.taskRepository.updateTask(data.id, updateData);
+    try {
+      const after = TaskLogic.mapTaskUpdateDetailsObject(updated);
+      const updatedFields: string[] = Object.keys(before).filter(
+        (key) => before[key] !== after[key],
+      );
+      const event: TaskUpdatedEvent = TaskLogic.mapUpdateTaskEvent(
+        data.id,
+        data.userId,
+        before,
+        after,
+        updatedFields,
+      );
+      await this.pulsarService.publishTaskEvent(event);
+    } catch (error) {
+      this.logger.error('Failed to publish TaskUpdated event', error);
+    }
+
     return { task: TaskLogic.formatTask(updated) } as TaskResponse;
   }
 
@@ -104,6 +137,15 @@ export class TaskService {
       await this.taskRepository.findTaskById(id, userId, createByMe);
     TaskValidation.ensureTaskFound(task, id);
     await this.taskRepository.deleteTaskById(id);
+    try {
+      const event: TaskDeletedEvent = TaskLogic.mapDeleteTaskEvent(
+        task!,
+        userId,
+      );
+      await this.pulsarService.publishTaskEvent(event);
+    } catch (error) {
+      this.logger.error('Failed to publish TaskDeleted event', error);
+    }
     return { message: 'Task deleted successfully' } as DeleteTaskResponse;
   }
 

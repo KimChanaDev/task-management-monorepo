@@ -29,7 +29,7 @@
 
 			{#if task.description}
 				<p class="text-sm sm:text-base text-gray-600 mb-3 break-words">
-					{task.description.slice(0, 100)}{task.description.length > 100 && '...'}
+					{task.description.slice(0, 100)}{task.description.length > 100 ? '...' : ''}
 				</p>
 			{/if}
 

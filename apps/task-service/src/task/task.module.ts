@@ -8,10 +8,12 @@ import { ProtoPackage } from '@repo/grpc/package';
 import { ConfigService } from '@nestjs/config';
 import { TaskRepository } from './task.repository';
 import { AuthExternalService } from './external-services/auth.external-service';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
     PrismaModule,
+    EventsModule,
     ClientsModule.registerAsync([
       {
         name: ProtoPackage.AUTH,

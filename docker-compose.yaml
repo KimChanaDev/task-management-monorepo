@@ -46,6 +46,7 @@ services:
       HTTP_PORT: 4001
       GRPC_PORT: 5001
       AUTH_SERVICE_GRPC_URL: auth-service:5000
+      PULSAR_SERVICE_URL: "pulsar://pulsar:6650"
     ports:
       - '4001:4001'
       - '5002:5002'
@@ -54,6 +55,8 @@ services:
         condition: service_healthy
       auth-service:
         condition: service_started
+      pulsar:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:4001/healthcheck" ]
       interval: 30s
@@ -145,6 +148,7 @@ services:
     image: apachepulsar/pulsar:4.1.1
     container_name: task-platform-pulsar
     command: bin/pulsar standalone
+    restart: on-failure
     ports:
       - '6650:6650' # Pulsar broker
       - '8080:8080' # Pulsar admin
