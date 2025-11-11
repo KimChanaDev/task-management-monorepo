@@ -93,6 +93,29 @@ services:
       retries: 3
       start_period: 40s
 
+  notification-service:
+    build:
+      context: .
+      dockerfile: ./apps/notification-service/Dockerfile
+    container_name: task-platform-notification-service
+    environment:
+      NODE_ENV: "Local"
+      APP_VERSION: "1.0.0"
+      HTTP_PORT: 4004
+      PULSAR_SERVICE_URL: "pulsar://pulsar:6650"
+      CLIENT_URL: "http://localhost:4003"
+    ports:
+      - '4004:4004'
+    depends_on:
+      pulsar:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4004/healthcheck" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   # PostgreSQL - Primary Database
   postgres:
     image: postgres:17-alpine
