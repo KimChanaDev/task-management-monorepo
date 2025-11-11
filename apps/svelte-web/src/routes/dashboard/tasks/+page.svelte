@@ -6,6 +6,7 @@
 	import { toTitleCaseFromEnum } from '$utils';
 	import { TaskBlock } from '$components';
 	import { taskStore } from '$stores';
+	import { resolve } from '$app/paths';
 
 	const client = getContextClient();
 
@@ -99,7 +100,7 @@
 	<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
 		<h1 class="text-xl sm:text-2xl font-bold text-gray-900">My Tasks</h1>
 		<a
-			href="/dashboard/create"
+			href={resolve('/dashboard/create')}
 			class="inline-flex items-center justify-center sm:justify-start px-3 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base gap-1.5 sm:gap-2"
 		>
 			<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +144,7 @@
 					class="w-full px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 				>
 					<option value="">All Status</option>
-					{#each Object.values(TASK_STATUS) as status}
+					{#each Object.values(TASK_STATUS) as status (status)}
 						<option value={status}>{toTitleCaseFromEnum(status)}</option>
 					{/each}
 				</select>
@@ -163,7 +164,7 @@
 					class="w-full px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 				>
 					<option value="">All Priority</option>
-					{#each Object.values(TASK_PRIORITY) as priority}
+					{#each Object.values(TASK_PRIORITY) as priority (priority)}
 						<option value={priority}>{toTitleCaseFromEnum(priority)}</option>
 					{/each}
 				</select>
@@ -203,7 +204,7 @@
 			</div>
 		{:else}
 			<div class="divide-y divide-gray-200">
-				{#each tasks as task}
+				{#each tasks as task (task.id)}
 					<TaskBlock {task} deleteTask={() => deleteTask(task.id)}></TaskBlock>
 				{/each}
 			</div>

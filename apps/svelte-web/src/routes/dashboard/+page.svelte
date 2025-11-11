@@ -4,6 +4,7 @@
 	import { TASK_QUERIES } from '$lib/graphql';
 	import { StatLabel, RecentTaskBlock } from '$components';
 	import { TASK_RECENT_LIMIT } from '$consts';
+	import { resolve } from '$app/paths';
 	const client = getContextClient();
 
 	let stats = $state({
@@ -114,7 +115,7 @@
 					<p class="mt-1 text-sm text-gray-500">Get started by creating a new task.</p>
 					<div class="mt-6">
 						<a
-							href="/dashboard/create"
+							href={resolve('/dashboard/create')}
 							class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
 						>
 							<svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,7 +132,7 @@
 				</div>
 			{:else}
 				<div class="space-y-4">
-					{#each recentTasks as task}
+					{#each recentTasks as task (task.id)}
 						<RecentTaskBlock
 							taskId={task.id}
 							taskTitle={task.title}
@@ -144,7 +145,7 @@
 
 				<div class="mt-6 text-center">
 					<a
-						href="/dashboard/tasks"
+						href={resolve('/dashboard/tasks')}
 						class="text-indigo-600 hover:text-indigo-500 font-medium text-sm"
 					>
 						View all tasks →

@@ -2,6 +2,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { getContextClient } from '@urql/svelte';
 	import { AUTH_QUERIES } from '$lib/graphql';
+	import { resolve } from '$app/paths';
 	const client = getContextClient();
 
 	let email = $state('');
@@ -30,7 +31,7 @@
 
 			if (result.data?.login) {
 				await invalidateAll();
-				goto('/dashboard');
+				goto(resolve('/dashboard'));
 			}
 		} catch (err: any) {
 			error = err.message || 'An error occurred during login';
@@ -54,7 +55,7 @@
 					<div
 						class="p-2.5 sm:p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl sm:rounded-2xl shadow-lg"
 					>
-						<a href="/" aria-label="back home">
+						<a href={resolve('/')} aria-label="back home">
 							<svg
 								class="w-10 h-10 sm:w-12 sm:h-12 text-white"
 								fill="none"
@@ -210,7 +211,7 @@
 
 			<div class="text-center">
 				<a
-					href="/auth/register"
+					href={resolve('/auth/register')}
 					class="inline-flex items-center justify-center w-full py-2.5 sm:py-3 px-4 text-sm sm:text-base border-2 border-indigo-600 text-indigo-600 font-semibold rounded-lg sm:rounded-xl hover:bg-indigo-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
 				>
 					Create an account

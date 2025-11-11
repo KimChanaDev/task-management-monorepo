@@ -73,6 +73,7 @@ function createTaskStore() {
 		 */
 		invalidate(taskId: string) {
 			update((cache) => {
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				const { [taskId]: _, ...rest } = cache;
 				return rest;
 			});

@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import { getContextClient } from '@urql/svelte';
 	import { formatDate } from '$utils';
+	import { resolve } from '$app/paths';
 
 	const client = getContextClient();
 
@@ -96,7 +97,7 @@
 	<!-- Header with back button -->
 	<div class="mb-4 sm:mb-6">
 		<a
-			href="/dashboard/tasks"
+			href={resolve('/dashboard/tasks')}
 			class="inline-flex items-center gap-1.5 sm:gap-2 text-indigo-600 hover:text-indigo-800 transition-colors mb-3 sm:mb-4 text-sm sm:text-base"
 		>
 			<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +143,7 @@
 					</div>
 					<div class="flex items-center gap-1.5 sm:gap-2 justify-end sm:justify-start">
 						<a
-							href="/dashboard/tasks/{task.id}/edit"
+							href={resolve(`/dashboard/tasks/${task.id}/edit`)}
 							class="px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium inline-flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
 						>
 							<svg

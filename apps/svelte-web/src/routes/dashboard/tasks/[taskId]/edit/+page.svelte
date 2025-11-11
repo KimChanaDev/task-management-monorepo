@@ -5,6 +5,7 @@
 	import { taskStore } from '$stores';
 	import { toTitleCaseFromEnum } from '$utils';
 	import { getContextClient } from '@urql/svelte';
+	import { resolve } from '$app/paths';
 
 	const client = getContextClient();
 
@@ -118,7 +119,7 @@
 	<!-- Header with back button -->
 	<div class="mb-4 sm:mb-6">
 		<a
-			href="/dashboard/tasks/{taskId}"
+			href={resolve(`/dashboard/tasks/${taskId}`)}
 			class="inline-flex items-center gap-1.5 sm:gap-2 text-indigo-600 hover:text-indigo-800 transition-colors mb-3 sm:mb-4 text-sm sm:text-base"
 		>
 			<svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,7 +217,7 @@
 							bind:value={status}
 							class="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
 						>
-							{#each Object.values(TASK_STATUS) as value}
+							{#each Object.values(TASK_STATUS) as value (value)}
 								<option {value}>{toTitleCaseFromEnum(value)}</option>
 							{/each}
 						</select>
@@ -234,7 +235,7 @@
 							bind:value={priority}
 							class="w-full px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
 						>
-							{#each Object.values(TASK_PRIORITY) as value}
+							{#each Object.values(TASK_PRIORITY) as value (value)}
 								<option {value}>{toTitleCaseFromEnum(value)}</option>
 							{/each}
 						</select>
@@ -325,7 +326,7 @@
 					</button>
 
 					<a
-						href="/dashboard/tasks/{taskId}"
+						href={resolve(`/dashboard/tasks/${taskId}`)}
 						class="px-5 py-2.5 sm:px-6 sm:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium text-center text-sm sm:text-base"
 					>
 						Cancel

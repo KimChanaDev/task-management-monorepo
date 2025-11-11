@@ -3,6 +3,7 @@
 	import { USER_QUERIES } from '$lib/graphql';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	const client = getContextClient();
 	let isChecking = $state(true);
@@ -13,9 +14,9 @@
 			const result = await client.query(USER_QUERIES.GET_ME, {});
 			if (result.data?.me) {
 				// User is logged in, redirect to dashboard
-				goto('/dashboard');
+				goto(resolve('/dashboard'));
 			}
-		} catch (error) {
+		} catch {
 			// User not logged in, stay on landing page
 		} finally {
 			isChecking = false;
@@ -61,7 +62,7 @@
 					class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center px-4 sm:px-0"
 				>
 					<a
-						href="/auth/register"
+						href={resolve('/auth/register')}
 						class="group relative inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-4 font-bold text-white transition-all duration-200 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
 					>
 						<span class="flex items-center space-x-2">
@@ -82,7 +83,7 @@
 						</span>
 					</a>
 					<a
-						href="/auth/login"
+						href={resolve('/auth/login')}
 						class="inline-flex items-center justify-center px-6 py-3 sm:px-8 sm:py-4 font-bold text-indigo-600 transition-all duration-200 bg-white border-2 border-indigo-600 rounded-xl hover:bg-indigo-50 shadow-md hover:shadow-lg transform hover:scale-105 text-sm sm:text-base"
 					>
 						Login
@@ -330,7 +331,7 @@
 					TaskFlow.
 				</p>
 				<a
-					href="/auth/register"
+					href={resolve('/auth/register')}
 					class="inline-flex items-center justify-center px-8 py-3 sm:px-10 sm:py-4 font-bold text-indigo-600 bg-white rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
 				>
 					<span>Start Free Today</span>

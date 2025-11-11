@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { TaskTag } from '$components';
+	import { resolve } from '$app/paths';
 
 	interface ComponentProps {
 		taskId: string;
@@ -12,7 +13,7 @@
 </script>
 
 <a
-	href="/dashboard/tasks/{taskId}"
+	href={resolve(`/dashboard/tasks/${taskId}`)}
 	class="block p-3 sm:p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all"
 >
 	<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0">

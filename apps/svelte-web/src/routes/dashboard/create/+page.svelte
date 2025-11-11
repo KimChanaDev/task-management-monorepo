@@ -4,7 +4,7 @@
 	import { TASK_QUERIES, type ICreateTaskInput } from '$lib/graphql';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
 	import { toTitleCaseFromEnum } from '$utils';
-
+	import { resolve } from '$app/paths';
 	const client = getContextClient();
 
 	let title = $state('');
@@ -44,7 +44,7 @@
 			}
 
 			if (result.data?.createTask) {
-				goto('/dashboard/tasks');
+				goto(resolve('/dashboard/tasks'));
 			}
 		} catch (err: any) {
 			error = err.message || 'An error occurred while creating the task';
@@ -118,7 +118,7 @@
 						required
 						class="w-full px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 					>
-						{#each Object.values(TASK_PRIORITY) as priority}
+						{#each Object.values(TASK_PRIORITY) as priority (priority)}
 							<option value={priority}>{toTitleCaseFromEnum(priority)}</option>
 						{/each}
 					</select>
@@ -137,7 +137,7 @@
 						required
 						class="w-full px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 					>
-						{#each Object.values(TASK_STATUS) as status}
+						{#each Object.values(TASK_STATUS) as status (status)}
 							<option value={status}>{toTitleCaseFromEnum(status)}</option>
 						{/each}
 					</select>
@@ -187,7 +187,7 @@
 				</button>
 
 				<a
-					href="/dashboard/tasks"
+					href={resolve('/dashboard/tasks')}
 					class="px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors text-center"
 				>
 					Cancel

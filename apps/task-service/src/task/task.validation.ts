@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { TaskPriority, TaskStatus } from '@prisma/client/task-service/index.js';
 import {
   BadRequestRpcException,

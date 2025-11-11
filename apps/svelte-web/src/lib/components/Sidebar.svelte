@@ -2,7 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { AUTH_QUERIES } from '$lib/graphql';
 	import { getContextClient } from '@urql/svelte';
-	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
 	const client = getContextClient();
 
 	interface ComponentProps {
@@ -88,7 +88,7 @@
 		<!-- Navigation -->
 		<nav class="flex-1 px-3 sm:px-4 py-4 sm:py-6 space-y-1 sm:space-y-2 overflow-y-auto">
 			<a
-				href="/dashboard"
+				href={resolve('/dashboard')}
 				onclick={() => (sidebarOpen = false)}
 				class="flex items-center px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
 			>
@@ -109,7 +109,7 @@
 			</a>
 
 			<a
-				href="/dashboard/tasks"
+				href={resolve('/dashboard/tasks')}
 				onclick={() => (sidebarOpen = false)}
 				class="flex items-center px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
 			>
@@ -130,7 +130,7 @@
 			</a>
 
 			<a
-				href="/dashboard/create"
+				href={resolve('/dashboard/create')}
 				onclick={() => (sidebarOpen = false)}
 				class="flex items-center px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
 			>
@@ -150,8 +150,9 @@
 				<span class="truncate">Create Task</span>
 			</a>
 
+			<!-- href={resolve('/dashboard/analytics')} -->
 			<a
-				href="/dashboard/analytics"
+				href="#"
 				onclick={() => (sidebarOpen = false)}
 				class="flex items-center px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
 			>

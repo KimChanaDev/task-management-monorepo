@@ -5,7 +5,6 @@ import { PUBLIC_GRAPHQL_GATWAY_URL } from '$env/static/public';
 import { USER_QUERIES, AUTH_QUERIES } from '$lib/graphql';
 import { ensureDataExisted, setAuthCookies, clearAuthCookies, findAuthCookies } from '$utils';
 
-const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register'];
 const AUTH_ROUTES = ['/auth/login', '/auth/register'];
 
 const session: Handle = async ({ event, resolve }) => {
@@ -29,7 +28,7 @@ const session: Handle = async ({ event, resolve }) => {
 				const data = await fetchUser(currentAccessToken);
 				ensureDataExisted(data, 'Failed to fetch user');
 				event.locals.user = data.user;
-			} catch (error) {
+			} catch {
 				ensureDataExisted(refreshToken, 'Failed to authenticate user, clearing cookies');
 				const newAccessToken = await fetchAccessToken(refreshToken!, event);
 				ensureDataExisted(newAccessToken, 'Refresh token invalid, clearing cookies');
@@ -50,7 +49,6 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 	const isProtectedRoute = pathname.startsWith('/dashboard');
 	const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
-	const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
 	// Redirect authenticated users away from auth pages
 	if (isAuthRoute && event.locals.user) {

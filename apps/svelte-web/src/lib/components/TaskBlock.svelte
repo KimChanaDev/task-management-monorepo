@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { TaskTag } from '$components';
+	import { resolve } from '$app/paths';
 
 	interface ComponentProps {
 		task: {
@@ -75,7 +76,7 @@
 
 		<div class="flex items-center gap-1.5 sm:gap-2 sm:ml-4 justify-end sm:justify-start">
 			<a
-				href="/dashboard/tasks/{task.id}"
+				href={resolve(`/dashboard/tasks/${task.id}`)}
 				class="p-1.5 sm:p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
 				title="View Details"
 			>
@@ -95,7 +96,7 @@
 				</svg>
 			</a>
 			<a
-				href="/dashboard/tasks/{task.id}/edit"
+				href={resolve(`/dashboard/tasks/${task.id}/edit`)}
 				class="p-1.5 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
 				title="Edit"
 			>
