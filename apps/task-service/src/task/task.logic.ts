@@ -6,7 +6,7 @@ import {
   TaskDeletedEvent,
   TaskEventType,
   TaskUpdatedEvent,
-} from 'src/events/types/task-events.type';
+} from '@repo/pulsar/types';
 
 export class TaskLogic {
   static formatTask(task: Prisma.TaskGetPayload<any>): Task {

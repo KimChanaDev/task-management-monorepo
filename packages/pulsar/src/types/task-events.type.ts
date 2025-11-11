@@ -1,8 +1,17 @@
 export enum TaskEventType {
-  TASK_CREATED = 'task.created',
-  TASK_UPDATED = 'task.updated',
-  TASK_DELETED = 'task.deleted',
+  TASK_CREATED = "task.created",
+  TASK_UPDATED = "task.updated",
+  TASK_DELETED = "task.deleted",
 }
+
+export enum TaskEventTopic {
+  TASK_EVENTS = "persistent://public/default/task-events",
+  TASK_CREATED = "persistent://public/default/task-created",
+  TASK_UPDATED = "persistent://public/default/task-updated",
+  TASK_DELETED = "persistent://public/default/task-deleted",
+}
+
+export type PulsarTopic = (typeof TaskEventTopic)[keyof typeof TaskEventTopic];
 
 export interface BaseTaskEvent {
   eventId: string;

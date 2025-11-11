@@ -1,5 +1,4 @@
-import { PULSAR_TOPICS } from '../constants/topics.constant';
-import { TaskEventType } from '../types/task-events.type';
+import { TaskEventType, TaskEventTopic } from '@repo/pulsar/types';
 
 export class PulsarLogic {
   static detemineTopicByEvent(eventType: TaskEventType): string {
@@ -7,16 +6,16 @@ export class PulsarLogic {
 
     switch (eventType) {
       case TaskEventType.TASK_CREATED:
-        topic = PULSAR_TOPICS.TASK_CREATED;
+        topic = TaskEventTopic.TASK_CREATED;
         break;
       case TaskEventType.TASK_UPDATED:
-        topic = PULSAR_TOPICS.TASK_UPDATED;
+        topic = TaskEventTopic.TASK_UPDATED;
         break;
       case TaskEventType.TASK_DELETED:
-        topic = PULSAR_TOPICS.TASK_DELETED;
+        topic = TaskEventTopic.TASK_DELETED;
         break;
       default:
-        topic = PULSAR_TOPICS.TASK_EVENTS;
+        topic = TaskEventTopic.TASK_EVENTS;
     }
     return topic;
   }

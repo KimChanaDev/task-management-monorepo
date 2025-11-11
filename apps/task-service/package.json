@@ -32,9 +32,9 @@
     "@repo/common": "*",
     "@repo/grpc": "*",
     "@repo/prisma": "*",
-    "pulsar-client": "^1.15.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "@repo/pulsar": "*"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

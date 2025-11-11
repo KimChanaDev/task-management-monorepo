@@ -1,9 +1,9 @@
-import { status } from "@grpc/grpc-js";
-import { HttpStatus } from "@nestjs/common";
-import { GraphQLError } from "graphql";
+import { status } from '@grpc/grpc-js';
+import { HttpStatus } from '@nestjs/common';
+import { GraphQLError } from 'graphql';
 export class GrpcCall {
   public static async callByHandlerException<T>(
-    operation: () => Promise<T>
+    operation: () => Promise<T>,
   ): Promise<T> {
     try {
       return await operation();
@@ -26,12 +26,12 @@ export class GrpcCall {
     graphqlCodeName: string;
   } {
     // case error is object that have code, message, details
-    if (typeof error === "object" && error !== null) {
-      const code = typeof error.code === "number" ? error.code : status.UNKNOWN;
+    if (typeof error === 'object' && error !== null) {
+      const code = typeof error.code === 'number' ? error.code : status.UNKNOWN;
       const message =
-        typeof error.message === "string"
+        typeof error.message === 'string'
           ? error.message
-          : "Unknown gRPC error";
+          : 'Unknown gRPC error';
       const details = error.details || null;
 
       return {
@@ -42,7 +42,7 @@ export class GrpcCall {
       };
     }
 
-    if (typeof error === "string") {
+    if (typeof error === 'string') {
       try {
         const parsed = JSON.parse(error);
         return this.parseGrpcError(parsed);
@@ -51,37 +51,37 @@ export class GrpcCall {
           code: status.UNKNOWN,
           message: error,
           details: null,
-          graphqlCodeName: "INTERNAL_SERVER_ERROR",
+          graphqlCodeName: 'INTERNAL_SERVER_ERROR',
         };
       }
     }
 
     return {
       code: status.UNKNOWN,
-      message: "Unknown error from microservice",
+      message: 'Unknown error from microservice',
       details: null,
-      graphqlCodeName: "INTERNAL_SERVER_ERROR",
+      graphqlCodeName: 'INTERNAL_SERVER_ERROR',
     };
   }
 
   private static grpcCodeToGraphQLName(grpcCode: any): string {
     switch (grpcCode) {
       case status.INVALID_ARGUMENT:
-        return "BAD_USER_INPUT";
+        return 'BAD_USER_INPUT';
       case status.NOT_FOUND:
-        return "NOT_FOUND";
+        return 'NOT_FOUND';
       case status.ALREADY_EXISTS:
-        return "CONFLICT";
+        return 'CONFLICT';
       case status.PERMISSION_DENIED:
-        return "FORBIDDEN";
+        return 'FORBIDDEN';
       case status.UNAUTHENTICATED:
-        return "UNAUTHENTICATED";
+        return 'UNAUTHENTICATED';
       case status.FAILED_PRECONDITION:
-        return "BAD_REQUEST";
+        return 'BAD_REQUEST';
       case status.UNAVAILABLE:
-        return "SERVICE_UNAVAILABLE";
+        return 'SERVICE_UNAVAILABLE';
       default:
-        return "INTERNAL_SERVER_ERROR";
+        return 'INTERNAL_SERVER_ERROR';
     }
   }
 

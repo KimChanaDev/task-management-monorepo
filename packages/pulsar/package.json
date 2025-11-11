@@ -1,0 +1,19 @@
+{
+  "name": "@repo/pulsar",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "pulsar-client": "^1.15.0"
+  },
+  "devDependencies": {
+  },
+  "exports": {
+    "./types": {
+      "types": "./src/types/task-events.type.ts",
+      "default": "./dist/types/task-events.type.js"
+    }
+  }
+}

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Pulsar from 'pulsar-client';
-import { TaskEvent } from '../types/task-events.type';
+import { TaskEvent } from '@repo/pulsar/types';
 import { PulsarLogic } from './pulsar.logic';
 
 @Injectable()

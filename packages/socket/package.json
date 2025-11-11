@@ -1,0 +1,19 @@
+{
+  "name": "@repo/socket",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    
+  },
+  "devDependencies": {
+  },
+  "exports": {
+    "./types": {
+      "types": "./src/types/notification.type.ts",
+      "default": "./dist/types/notification.type.js"
+    }
+  }
+}

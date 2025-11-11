@@ -26,7 +26,7 @@ import {
   TaskCreatedEvent,
   TaskUpdatedEvent,
   TaskDeletedEvent,
-} from '../events/types/task-events.type';
+} from '@repo/pulsar/types';
 
 @Injectable()
 export class TaskService {
