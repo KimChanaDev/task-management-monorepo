@@ -7,7 +7,7 @@ import { AuthController } from './auth.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthRepository } from './auth.repository';
 import { SessionController } from './session.controller';
-import { RedisModule } from 'src/redis/redis.module';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   imports: [

@@ -1,4 +1,4 @@
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client/auth-service/index.js';
 import { Injectable, Logger } from '@nestjs/common';
 import { InternalRpcException } from '@repo/grpc/exception';

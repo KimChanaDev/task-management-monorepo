@@ -5,7 +5,7 @@ import { join } from 'path';
 import { TaskResolver } from './task.resolver';
 import { TaskService } from './task.service';
 import { ProtoPackage } from '@repo/grpc/package';
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [

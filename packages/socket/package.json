@@ -13,7 +13,7 @@
   "exports": {
     "./types": {
       "types": "./src/types/notification.type.ts",
-      "default": "./dist/types/notification.type.js"
+      "default": "./dist/src/types/notification.type.js"
     }
   }
 }

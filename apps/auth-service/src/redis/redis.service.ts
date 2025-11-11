@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { REDIS_KEYS } from 'src/auth/constants/redis-key.constant';
-import { UserRedisMetadata } from 'src/auth/interfaces/user-redis-metadata.interface';
+import { REDIS_KEYS } from '../auth/constants/redis-key.constant';
+import { UserRedisMetadata } from '../auth/interfaces/user-redis-metadata.interface';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {

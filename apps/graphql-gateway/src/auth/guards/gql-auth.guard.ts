@@ -7,7 +7,7 @@ import {
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthService } from '../auth.service';
 import { TokenPayload, ValidateTokenResponse } from '@repo/grpc/auth';
-import { GqlContext } from 'src/interfaces/gql-context.interface';
+import { GqlContext } from '../../interfaces/gql-context.interface';
 
 @Injectable()
 export class GqlAuthGuard implements CanActivate {

@@ -6,7 +6,7 @@ import { RegisterInput, LoginInput } from './dto/auth.input';
 import { GqlAuthGuard } from './guards/gql-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { ValidateUserResponse, type TokenPayload } from '@repo/grpc/auth';
-import { type GqlContext } from 'src/interfaces/gql-context.interface';
+import { type GqlContext } from '../interfaces/gql-context.interface';
 import { AuthLogic } from './auth.logic';
 
 @Resolver()

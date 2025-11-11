@@ -13,7 +13,7 @@
   "exports": {
     "./types": {
       "types": "./src/types/task-events.type.ts",
-      "default": "./dist/types/task-events.type.js"
+      "default": "./dist/src/types/task-events.type.js"
     }
   }
 }

@@ -1,7 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { TokenPayload } from '@repo/grpc/auth';
-import { GqlContext } from 'src/interfaces/gql-context.interface';
+import { GqlContext } from '../../interfaces/gql-context.interface';
 
 export const CurrentUser = createParamDecorator(
   (data: unknown, executionContext: ExecutionContext) => {
