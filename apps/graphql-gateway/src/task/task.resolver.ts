@@ -64,7 +64,7 @@ export class TaskResolver {
       filter,
     );
     return {
-      tasks: result.tasks as TaskDto[],
+      tasks: (result.tasks ?? []) as TaskDto[],
       total: result.total,
     } as MyTasksDto;
   }
@@ -112,6 +112,14 @@ export class TaskResolver {
       user.sub,
       limit,
     );
-    return result as DashboardDto;
+    return {
+      recentTasks: (result.recentTasks ?? []) as TaskDto[],
+      totalCount: result.totalCount,
+      todoCount: result.todoCount,
+      inProgressCount: result.inProgressCount,
+      reviewCount: result.reviewCount,
+      completedCount: result.completedCount,
+      cancelledCount: result.cancelledCount,
+    } as DashboardDto;
   }
 }

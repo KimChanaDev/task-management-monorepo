@@ -18,6 +18,7 @@ export interface BaseTaskEvent {
   eventType: TaskEventType;
   timestamp: Date;
   userId: string;
+  assignedToId?: string;
 }
 
 export interface TaskCreatedEvent extends BaseTaskEvent {

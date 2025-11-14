@@ -26,13 +26,13 @@ export class TaskLogic {
 
   static mapCreateTaskEvent(
     task: Prisma.TaskGetPayload<any>,
-    userId: string,
   ): TaskCreatedEvent {
     const event: TaskCreatedEvent = {
       eventId: randomUUID(),
       eventType: TaskEventType.TASK_CREATED,
       timestamp: new Date(),
-      userId,
+      userId: task.createdBy,
+      assignedToId: task.assignedTo || undefined,
       task: {
         id: task.id,
         title: task.title,
@@ -50,13 +50,13 @@ export class TaskLogic {
 
   static mapDeleteTaskEvent(
     task: Prisma.TaskGetPayload<any>,
-    userId: string,
   ): TaskDeletedEvent {
     const event: TaskDeletedEvent = {
       eventId: randomUUID(),
       eventType: TaskEventType.TASK_DELETED,
       timestamp: new Date(),
-      userId,
+      userId: task.createdBy,
+      assignedToId: task.assignedTo || undefined,
       taskId: task.id,
       task: {
         id: task.id,
@@ -70,6 +70,7 @@ export class TaskLogic {
   static mapUpdateTaskEvent(
     taskId: string,
     userId: string,
+    assignedToId: string | undefined,
     before: Record<string, any>,
     after: Record<string, any>,
     updatedFields: string[],
@@ -79,6 +80,7 @@ export class TaskLogic {
       eventType: TaskEventType.TASK_UPDATED,
       timestamp: new Date(),
       userId,
+      assignedToId,
       taskId,
       changes: { before, after },
       updatedFields,

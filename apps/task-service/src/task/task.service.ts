@@ -38,20 +38,17 @@ export class TaskService {
     private readonly pulsarService: PulsarService,
   ) {}
 
-  async createTask(data: CreateTaskRequest): Promise<TaskResponse> {
-    this.logger.log(`Creating task: ${data.title}`);
-    TaskValidation.ensureCreateTaskRequest(data);
-    await this.authExternalService.validateUserExists(data.createdBy);
-    if (data.assignedTo) {
-      await this.authExternalService.validateUserExists(data.assignedTo);
+  async createTask(req: CreateTaskRequest): Promise<TaskResponse> {
+    this.logger.log(`Creating task: ${req.title}`);
+    TaskValidation.ensureCreateTaskRequest(req);
+    await this.authExternalService.validateUserExists(req.createdBy);
+    if (req.assignedTo) {
+      await this.authExternalService.validateUserExists(req.assignedTo);
     }
     const task: Prisma.TaskGetPayload<any> =
-      await this.taskRepository.createTask(data);
+      await this.taskRepository.createTask(req);
     try {
-      const event: TaskCreatedEvent = TaskLogic.mapCreateTaskEvent(
-        task,
-        data.createdBy,
-      );
+      const event: TaskCreatedEvent = TaskLogic.mapCreateTaskEvent(task);
       await this.pulsarService.publishTaskEvent(event);
     } catch (error) {
       this.logger.error('Failed to publish TaskCreated event', error);
@@ -64,7 +61,7 @@ export class TaskService {
     TaskValidation.ensureGetTaskRequest(id, userId);
     await this.authExternalService.validateUserExists(userId);
     const task: Prisma.TaskGetPayload<any> | null =
-      await this.taskRepository.findTaskById(id);
+      await this.taskRepository.findTaskById(id, userId);
     return {
       task: task ? TaskLogic.formatTask(task) : undefined,
     } as TaskResponse;
@@ -92,34 +89,35 @@ export class TaskService {
     } as TasksResponse;
   }
 
-  async updateTask(data: UpdateTaskRequest): Promise<TaskResponse> {
-    this.logger.log(`Updating task: ${data.id}`);
-    TaskValidation.ensureUpdateTaskRequest(data);
-    await this.authExternalService.validateUserExists(data.userId);
+  async updateTask(req: UpdateTaskRequest): Promise<TaskResponse> {
+    this.logger.log(`Updating task: ${req.id}`);
+    TaskValidation.ensureUpdateTaskRequest(req);
+    await this.authExternalService.validateUserExists(req.userId);
     const task: Prisma.TaskGetPayload<any> | null =
-      await this.taskRepository.findTaskById(data.id, data.userId);
-    TaskValidation.ensureTaskFound(task, data.id);
-    if (data.assignedTo) {
-      await this.authExternalService.validateUserExists(data.assignedTo);
+      await this.taskRepository.findTaskById(req.id, req.userId);
+    TaskValidation.ensureTaskFound(task, req.id);
+    if (req.assignedTo) {
+      await this.authExternalService.validateUserExists(req.assignedTo);
     }
     const before = TaskLogic.mapTaskUpdateDetailsObject(task!);
     const updateData: Prisma.TaskUpdateInput = {
-      title: data.title,
-      description: data.description || null,
-      priority: data.priority as TaskPriority,
-      status: data.status as TaskStatus,
-      dueDate: data.dueDate ? new Date(data.dueDate) : null,
-      assignedTo: data.assignedTo || null,
+      title: req.title,
+      description: req.description || null,
+      priority: req.priority as TaskPriority,
+      status: req.status as TaskStatus,
+      dueDate: req.dueDate ? new Date(req.dueDate) : null,
+      assignedTo: req.assignedTo || null,
     };
-    const updated = await this.taskRepository.updateTask(data.id, updateData);
+    const updated = await this.taskRepository.updateTask(req.id, updateData);
     try {
       const after = TaskLogic.mapTaskUpdateDetailsObject(updated);
       const updatedFields: string[] = Object.keys(before).filter(
         (key) => before[key] !== after[key],
       );
       const event: TaskUpdatedEvent = TaskLogic.mapUpdateTaskEvent(
-        data.id,
-        data.userId,
+        req.id,
+        updated.createdBy,
+        updated.assignedTo ?? undefined,
         before,
         after,
         updatedFields,
@@ -140,10 +138,7 @@ export class TaskService {
     TaskValidation.ensureTaskFound(task, id);
     await this.taskRepository.deleteTaskById(id);
     try {
-      const event: TaskDeletedEvent = TaskLogic.mapDeleteTaskEvent(
-        task!,
-        userId,
-      );
+      const event: TaskDeletedEvent = TaskLogic.mapDeleteTaskEvent(task!);
       await this.pulsarService.publishTaskEvent(event);
     } catch (error) {
       this.logger.error('Failed to publish TaskDeleted event', error);

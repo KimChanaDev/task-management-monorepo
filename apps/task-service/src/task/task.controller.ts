@@ -50,7 +50,7 @@ export class TaskController implements TaskServiceController {
     return this.taskService.updateTaskStatus(data);
   }
 
-  async getUserTasks(data: GetUserTasksRequest) {
+  async getUserTasks(data: GetUserTasksRequest): Promise<TasksResponse> {
     return this.taskService.getUserTasks(data);
   }
 

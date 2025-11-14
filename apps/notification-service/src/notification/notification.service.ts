@@ -86,7 +86,28 @@ export class NotificationService implements OnModuleInit {
         data.userId,
         notification,
       );
-      // TODO: Optionally, notify assignee if needed
+
+      if (!data.changes.before.assignedTo && data.changes.after.assignedTo) {
+        const newAssigneeNotification =
+          NotificationLogic.mapNewAssignedNotification(data);
+        this.notificationGateway.sendNotificationToUser(
+          data.changes.after.assignedTo,
+          newAssigneeNotification,
+        );
+      } else if (
+        data.changes.before.assignedTo &&
+        !data.changes.after.assignedTo
+      ) {
+        this.notificationGateway.sendNotificationToUser(
+          data.changes.before.assignedTo,
+          notification,
+        );
+      } else if (data.assignedToId) {
+        this.notificationGateway.sendNotificationToUser(
+          data.assignedToId,
+          notification,
+        );
+      }
     } catch (error) {
       this.logger.error('Error handling TaskUpdated event', error);
       throw error;
@@ -101,6 +122,12 @@ export class NotificationService implements OnModuleInit {
         data.userId,
         NotificationLogic.mapNotificationMessage(data),
       );
+      if (data.assignedToId) {
+        this.notificationGateway.sendNotificationToUser(
+          data.assignedToId,
+          NotificationLogic.mapNotificationMessage(data),
+        );
+      }
     } catch (error) {
       this.logger.error('Error handling TaskDeleted event', error);
       throw error;

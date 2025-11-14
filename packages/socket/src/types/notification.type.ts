@@ -1,7 +1,8 @@
 export enum NotificationType {
-  TASK_CREATED = 'task.created',
-  TASK_UPDATED = 'task.updated',
-  TASK_DELETED = 'task.deleted',
+  TASK_CREATED = "task.created",
+  TASK_UPDATED = "task.updated",
+  TASK_DELETED = "task.deleted",
+  TASK_ASSIGNED = "task.assigned",
 }
 
 export interface BaseNotification {
@@ -42,7 +43,16 @@ export interface TaskDeletedNotification extends BaseNotification {
   };
 }
 
+export interface TaskAssignedNotification extends BaseNotification {
+  type: NotificationType.TASK_ASSIGNED;
+  data: {
+    taskId: string;
+    taskTitle: string;
+  };
+}
+
 export type Notification =
   | TaskCreatedNotification
   | TaskUpdatedNotification
-  | TaskDeletedNotification;
+  | TaskDeletedNotification
+  | TaskAssignedNotification;
