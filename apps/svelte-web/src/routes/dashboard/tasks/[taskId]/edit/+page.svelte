@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { type ITaskResponse, type IUpdateTaskInput } from '$lib/graphql';
-	import { createTaskAPI } from '$lib/api';
+	import { createTaskAPI, type ITaskResponse, type IUpdateTaskInput } from '$lib/api';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
 	import { taskStore } from '$stores';
 	import { toTitleCaseFromEnum } from '$utils';

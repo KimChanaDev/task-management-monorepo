@@ -1,11 +1,45 @@
 import type { Client } from '@urql/svelte';
-import {
-	TASK_QUERIES,
-	type ITaskResponse,
-	type ICreateTaskInput,
-	type IUpdateTaskInput,
-	type IMyTaskFilterInput
-} from '$lib/graphql';
+import { TASK_QUERIES } from '$lib/graphql';
+
+export interface ICreateTaskInput {
+	title: string;
+	description?: string;
+	status?: string;
+	priority?: string;
+	dueDate?: string;
+	assignedTo?: string;
+}
+
+export interface IMyTaskFilterInput {
+	status?: string;
+	priority?: string;
+	search?: string;
+	page: number;
+	limit: number;
+}
+
+export interface IUpdateTaskInput {
+	id: string;
+	title?: string;
+	description?: string;
+	status?: string;
+	priority?: string;
+	dueDate?: string;
+	assignedTo?: string;
+}
+
+export interface ITaskResponse {
+	id: string;
+	title: string;
+	description: string;
+	priority: string;
+	status: string;
+	dueDate: string;
+	createdBy: string;
+	assignedTo: string;
+	createdAt: string;
+	updatedAt: string;
+}
 
 export class TaskAPI {
 	constructor(private client: Client) {}

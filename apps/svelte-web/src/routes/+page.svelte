@@ -1,19 +1,19 @@
 <script lang="ts">
 	import { getContextClient } from '@urql/svelte';
-	import { USER_QUERIES } from '$lib/graphql';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { createUserAPI, type IUser } from '$lib/api';
 
 	const client = getContextClient();
+	const userAPI = createUserAPI(client);
 	let isChecking = $state(true);
 
 	onMount(async () => {
 		// Check if user is already logged in
 		try {
-			const result = await client.query(USER_QUERIES.GET_ME, {});
-			if (result.data?.me) {
-				// User is logged in, redirect to dashboard
+			const user: IUser | undefined = await userAPI.getMe();
+			if (user) {
 				goto(resolve('/dashboard'));
 			}
 		} catch {

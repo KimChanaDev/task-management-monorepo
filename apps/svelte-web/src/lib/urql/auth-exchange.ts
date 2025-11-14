@@ -1,6 +1,6 @@
 import { authExchange as createAuthExchange } from '@urql/exchange-auth';
 import type { Operation, CombinedError } from '@urql/core';
-import { REFRESH_ACCESS_TOKEN_OPERATION } from '$lib/graphql';
+import { LOGIN_OPERATION, REFRESH_ACCESS_TOKEN_OPERATION } from '$lib/graphql';
 
 /**
  * Auth Exchange for urql using official @urql/exchange-auth
@@ -60,7 +60,9 @@ export const authExchange = createAuthExchange(async () => {
 				REFRESH_ACCESS_TOKEN_OPERATION
 			);
 
-			return !isRefreshOperation;
+			const isLoginOperation = operation.query.loc?.source.body.includes(LOGIN_OPERATION);
+
+			return !isRefreshOperation && !isLoginOperation;
 		}
 	};
 });

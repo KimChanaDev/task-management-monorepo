@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { AUTH_QUERIES } from '$lib/graphql';
 	import { getContextClient } from '@urql/svelte';
 	import { resolve } from '$app/paths';
+	import { createAuthAPI } from '$lib/api';
+
 	const client = getContextClient();
+	const authAPI = createAuthAPI(client);
 
 	interface ComponentProps {
 		user: {
@@ -17,31 +19,13 @@
 
 	async function logout() {
 		try {
-			await client.mutation(AUTH_QUERIES.LOGOUT, {});
+			await authAPI.logout();
 		} catch (error) {
 			console.error('Logout error:', error);
 		}
-
 		await invalidateAll(); // Invalidate all data to trigger re-fetch
 		window.location.href = '/auth/login';
 	}
-
-	// Close sidebar when clicking outside on mobile
-	// function handleClickOutside(event: MouseEvent) {
-	// 	if (window.innerWidth < 1024 && sidebarOpen) {
-	// 		const sidebar = document.getElementById('sidebar');
-	// 		if (sidebar && !sidebar.contains(event.target as Node)) {
-	// 			sidebarOpen = false;
-	// 		}
-	// 	}
-	// }
-
-	// onMount(() => {
-	// 	document.addEventListener('click', handleClickOutside);
-	// 	return () => {
-	// 		document.removeEventListener('click', handleClickOutside);
-	// 	};
-	// });
 </script>
 
 <!-- Overlay for mobile -->

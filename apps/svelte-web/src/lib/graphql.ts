@@ -1,9 +1,11 @@
 // GraphQL queries and mutations
 export const REFRESH_ACCESS_TOKEN_OPERATION = 'refreshAccessToken';
+export const LOGIN_OPERATION = 'login';
+
 export const AUTH_QUERIES = {
 	LOGIN: `
 		mutation Login($input: LoginInput!) {
-			login(input: $input) {
+			${LOGIN_OPERATION}(input: $input) {
 				id
 				email
 				username
@@ -177,50 +179,3 @@ export const USER_QUERIES = {
 		}
 	`
 };
-
-export interface ICreateTaskInput {
-	title: string;
-	description?: string;
-	status?: string;
-	priority?: string;
-	dueDate?: string;
-	assignedTo?: string;
-}
-
-export interface IMyTaskFilterInput {
-	status?: string;
-	priority?: string;
-	search?: string;
-	page: number;
-	limit: number;
-}
-
-export interface IAllTaskFilterInput {
-	status?: string;
-	priority?: string;
-	page: number;
-	limit: number;
-}
-
-export interface IUpdateTaskInput {
-	id: string;
-	title?: string;
-	description?: string;
-	status?: string;
-	priority?: string;
-	dueDate?: string;
-	assignedTo?: string;
-}
-
-export interface ITaskResponse {
-	id: string;
-	title: string;
-	description: string;
-	priority: string;
-	status: string;
-	dueDate: string;
-	createdBy: string;
-	assignedTo: string;
-	createdAt: string;
-	updatedAt: string;
-}

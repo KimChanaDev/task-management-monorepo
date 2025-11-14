@@ -1,5 +1,5 @@
+import type { ITaskResponse } from '$lib/api';
 import { writable, get } from 'svelte/store';
-import { type ITaskResponse } from '$lib/graphql';
 
 interface TaskState {
 	tasks: ITaskResponse[];

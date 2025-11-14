@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { getContextClient } from '@urql/svelte';
 	import { goto } from '$app/navigation';
-	import { AUTH_QUERIES } from '$lib/graphql';
 	import { resolve } from '$app/paths';
+	import { createAuthAPI, type IAuthResponse } from '$lib/api';
+
 	const client = getContextClient();
+	const authAPI = createAuthAPI(client);
 
 	let username = $state('');
 	let email = $state('');
@@ -38,21 +40,13 @@
 		isLoading = true;
 
 		try {
-			const result = await client.mutation(AUTH_QUERIES.REGISTER, {
-				input: {
-					username,
-					email,
-					password
-				}
+			const result: IAuthResponse = await authAPI.register({
+				username,
+				email,
+				password
 			});
 
-			if (result.error?.graphQLErrors[0]?.message) {
-				error = result.error.graphQLErrors[0].message;
-				isLoading = false;
-				return;
-			}
-
-			if (result.data?.register) {
+			if (result) {
 				goto(resolve('/auth/login'));
 			}
 		} catch (err: any) {

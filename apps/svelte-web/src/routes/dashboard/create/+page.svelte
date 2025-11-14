@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { getContextClient } from '@urql/svelte';
-	import { type ICreateTaskInput } from '$lib/graphql';
-	import { createTaskAPI } from '$lib/api';
+	import { createTaskAPI, type ICreateTaskInput } from '$lib/api';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
 	import { toTitleCaseFromEnum } from '$utils';
 	import { resolve } from '$app/paths';
