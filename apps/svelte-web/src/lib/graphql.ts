@@ -1,5 +1,5 @@
 // GraphQL queries and mutations
-
+export const REFRESH_ACCESS_TOKEN_OPERATION = 'refreshAccessToken';
 export const AUTH_QUERIES = {
 	LOGIN: `
 		mutation Login($input: LoginInput!) {
@@ -28,7 +28,7 @@ export const AUTH_QUERIES = {
 	`,
 	REFRESH_TOKEN: `
 		mutation RefreshAccessToken {
-			refreshAccessToken {
+			${REFRESH_ACCESS_TOKEN_OPERATION} {
 				message
 			}
 		}

@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { TASK_QUERIES, type ITaskResponse, type IUpdateTaskInput } from '$lib/graphql';
+	import { type ITaskResponse, type IUpdateTaskInput } from '$lib/graphql';
+	import { createTaskAPI } from '$lib/api';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
 	import { taskStore } from '$stores';
 	import { toTitleCaseFromEnum } from '$utils';
 	import { getContextClient } from '@urql/svelte';
 	import { resolve } from '$app/paths';
+	import { goto } from '$app/navigation';
 
 	const client = getContextClient();
+	const taskAPI = createTaskAPI(client);
 
 	interface ComponentProps {
 		data: {
@@ -20,7 +23,6 @@
 	let loading = $state(true);
 	let submitting = $state(false);
 	let error = $state('');
-	let successMessage = $state('');
 
 	// Form fields
 	let title = $state('');
@@ -54,14 +56,12 @@
 		error = '';
 
 		try {
-			const data = await client.query(TASK_QUERIES.GET_TASK, { id: taskId });
+			const fetchedTask = await taskAPI.getTask(taskId);
 
-			if (data.error) {
-				error = data.error.message || 'Failed to fetch task';
-			} else if (data.data.task) {
-				task = data.data.task;
-				populateForm(data.data.task);
-				taskStore.setTask(data.data.task);
+			if (fetchedTask) {
+				task = fetchedTask;
+				populateForm(fetchedTask);
+				taskStore.addTask(fetchedTask);
 			} else {
 				error = 'Task not found';
 			}
@@ -78,7 +78,6 @@
 
 		submitting = true;
 		error = '';
-		successMessage = '';
 
 		const updateInput: IUpdateTaskInput = {
 			id: taskId,
@@ -91,20 +90,12 @@
 		};
 
 		try {
-			const data = await client.mutation(TASK_QUERIES.UPDATE_TASK, {
-				updateTaskInput: updateInput
-			});
+			const updatedTask = await taskAPI.updateTask(updateInput);
 
-			if (data.data?.updateTask) {
-				taskStore.setTask(data.data.updateTask);
-				successMessage = 'Task updated successfully!';
-				setTimeout(() => {
-					window.location.href = `/dashboard/tasks/${taskId}`;
-				}, 1000);
+			if (updatedTask) {
+				goto(resolve(`/dashboard/tasks/${taskId}`));
 			} else {
-				error =
-					data.error?.graphQLErrors[0].message || data.error?.message || 'Failed to update task';
-				taskStore.invalidate(taskId);
+				error = 'Failed to update task';
 			}
 		} catch (err) {
 			console.error('Error updating task:', err);
@@ -156,14 +147,6 @@
 				>
 					<p class="font-medium">Error</p>
 					<p class="mt-1">{error}</p>
-				</div>
-			{/if}
-
-			{#if successMessage}
-				<div
-					class="bg-green-50 border border-green-200 text-green-700 px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg mb-4 sm:mb-6 text-sm sm:text-base"
-				>
-					<p class="font-medium">{successMessage}</p>
 				</div>
 			{/if}
 

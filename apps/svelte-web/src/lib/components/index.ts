@@ -4,3 +4,6 @@ export { default as StatLabel } from './StatLabel.svelte';
 export { default as RecentTaskBlock } from './RecentTaskBlock.svelte';
 export { default as TaskBlock } from './TaskBlock.svelte';
 export { default as TaskTag } from './TaskTag.svelte';
+export { default as ToastNotification } from './ToastNotification.svelte';
+export { default as ToastContainer } from './ToastContainer.svelte';
+export { default as ActivityFeed } from './ActivityFeed.svelte';

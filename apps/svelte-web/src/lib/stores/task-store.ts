@@ -1,117 +1,127 @@
 import { writable, get } from 'svelte/store';
-import type { ITaskResponse } from '$lib/graphql';
+import { type ITaskResponse } from '$lib/graphql';
 
-interface TaskCache {
-	[taskId: string]: {
-		data: ITaskResponse;
-		timestamp: number;
+interface TaskState {
+	tasks: ITaskResponse[];
+	dashboard: {
+		recentTasks: ITaskResponse[];
+		stats: {
+			totalTasks: number;
+			todoTasks: number;
+			reviewTasks: number;
+			completedTasks: number;
+			inProgressTasks: number;
+			cancelledTasks: number;
+		};
+	};
+	individualPage: {
+		task: ITaskResponse | undefined;
+		error: string;
 	};
 }
 
-// Cache duration: 5 minutes
-const CACHE_DURATION = 5 * 60 * 1000;
-
 function createTaskStore() {
-	const { subscribe, update } = writable<TaskCache>({});
+	const { subscribe, update } = writable<TaskState>({
+		tasks: [],
+		dashboard: {
+			recentTasks: [],
+			stats: {
+				totalTasks: 0,
+				todoTasks: 0,
+				reviewTasks: 0,
+				completedTasks: 0,
+				inProgressTasks: 0,
+				cancelledTasks: 0
+			}
+		},
+		individualPage: {
+			task: undefined,
+			error: ''
+		}
+	});
 
 	return {
 		subscribe,
-
-		/**
-		 * Store task in cache
-		 */
-		setTask(task: ITaskResponse) {
-			update((cache) => ({
-				...cache,
-				[task.id]: {
-					data: task,
-					timestamp: Date.now()
+		addTask(task: ITaskResponse) {
+			update((state) => {
+				state.tasks = [task, ...state.tasks];
+				return state;
+			});
+		},
+		addRecentTask(task: ITaskResponse) {
+			update((state) => {
+				state.dashboard.recentTasks = [task, ...state.dashboard.recentTasks];
+				state.dashboard.recentTasks.pop();
+				return state;
+			});
+		},
+		updateTask(updatedTask: ITaskResponse) {
+			update((state) => {
+				const index = state.tasks.findIndex((task) => task.id === updatedTask.id);
+				if (index !== -1) {
+					state.tasks[index] = updatedTask;
 				}
-			}));
-		},
 
-		/**
-		 * Store multiple tasks in cache simultaneously
-		 */
+				const dashboardIndex = state.dashboard.recentTasks.findIndex(
+					(task) => task.id === updatedTask.id
+				);
+				if (dashboardIndex !== -1) {
+					state.dashboard.recentTasks[dashboardIndex] = updatedTask;
+				}
+
+				if (state.individualPage.task?.id === updatedTask.id) {
+					state.individualPage.task = updatedTask;
+				}
+				return state;
+			});
+		},
 		setTasks(tasks: ITaskResponse[]) {
-			update((cache) => {
-				const newCache = { ...cache };
-				const now = Date.now();
-				tasks.forEach((task) => {
-					newCache[task.id] = {
-						data: task,
-						timestamp: now
-					};
-				});
-				return newCache;
+			update((state) => {
+				state.tasks = tasks;
+				return state;
 			});
 		},
-
-		/**
-		 * Get multiple task from cache (if not expired)
-		 * @returns task data | null if no cache or expired
-		 */
+		setDashboard(
+			tasks: ITaskResponse[],
+			stats: {
+				totalTasks: number;
+				todoTasks: number;
+				reviewTasks: number;
+				completedTasks: number;
+				inProgressTasks: number;
+				cancelledTasks: number;
+			}
+		) {
+			update((state) => {
+				state.dashboard.recentTasks = tasks;
+				state.dashboard.stats = stats;
+				return state;
+			});
+		},
+		setIndividualPage(task: ITaskResponse | undefined, error: string) {
+			update((state) => {
+				state.individualPage.task = task;
+				state.individualPage.error = error;
+				return state;
+			});
+		},
 		getTask(taskId: string): ITaskResponse | null {
-			const cache = get({ subscribe });
-			const cached = cache[taskId];
-
-			if (!cached) return null;
-
-			const isExpired = Date.now() - cached.timestamp > CACHE_DURATION;
-			return isExpired ? null : cached.data;
+			const state: TaskState = get({ subscribe });
+			return state.tasks.find((task) => task.id === taskId) || null;
 		},
 
-		/**
-		 * Checking there is task in cache (if not expired)
-		 */
-		hasTask(taskId: string): boolean {
-			return this.getTask(taskId) !== null;
-		},
-
-		/**
-		 * Delete task from cache (use when edit or delete task)
-		 */
+		// Delete task from store
 		invalidate(taskId: string) {
-			update((cache) => {
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				const { [taskId]: _, ...rest } = cache;
-				return rest;
-			});
-		},
-
-		/**
-		 * delete multiple tasks from cache
-		 */
-		invalidateMultiple(taskIds: string[]) {
-			update((cache) => {
-				const newCache = { ...cache };
-				taskIds.forEach((id) => {
-					delete newCache[id];
-				});
-				return newCache;
-			});
-		},
-
-		/**
-		 * Clear all cache
-		 */
-		clear() {
-			update(() => ({}));
-		},
-
-		/**
-		 * Delete expired tasks out of cache
-		 */
-		cleanExpired() {
-			update((cache) => {
-				const now = Date.now();
-				const newCache: TaskCache = {};
-				Object.entries(cache).forEach(([taskId, cachedTask]) => {
-					if (now - cachedTask.timestamp <= CACHE_DURATION) {
-						newCache[taskId] = cachedTask;
-					}
-				});
-				return newCache;
+			update((state) => {
+				state.tasks = state.tasks.filter((task) => task.id !== taskId);
+				state.dashboard.recentTasks = state.dashboard.recentTasks.filter(
+					(task) => task.id !== taskId
+				);
+				if (state.individualPage.task?.id === taskId) {
+					state.individualPage.task = undefined;
+					state.individualPage.error = 'Task not found';
+				}
+				return state;
 			});
 		}
 	};

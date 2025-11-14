@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { getContextClient } from '@urql/svelte';
-	import { TASK_QUERIES, type ICreateTaskInput } from '$lib/graphql';
+	import { type ICreateTaskInput } from '$lib/graphql';
+	import { createTaskAPI } from '$lib/api';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
 	import { toTitleCaseFromEnum } from '$utils';
 	import { resolve } from '$app/paths';
 	const client = getContextClient();
+	const taskAPI = createTaskAPI(client);
 
 	let title = $state('');
 	let description = $state('');
@@ -34,20 +36,14 @@
 				input.dueDate = new Date(dueDate).toISOString();
 			}
 
-			const result = await client.mutation(TASK_QUERIES.CREATE_TASK, { input });
+			const task = await taskAPI.createTask(input);
 
-			if (result.error?.message) {
-				error =
-					result.error?.graphQLErrors[0]?.message ?? result.error?.message ?? 'An error occurred';
-				loading = false;
-				return;
-			}
-
-			if (result.data?.createTask) {
+			if (task) {
 				goto(resolve('/dashboard/tasks'));
 			}
 		} catch (err: any) {
 			error = err.message || 'An error occurred while creating the task';
+		} finally {
 			loading = false;
 		}
 	}

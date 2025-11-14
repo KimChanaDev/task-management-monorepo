@@ -1,13 +1,15 @@
 <script lang="ts">
-	import { TASK_QUERIES, type ITaskResponse } from '$lib/graphql';
 	import { TaskTag } from '$components';
 	import { taskStore } from '$lib/stores/task-store';
 	import { onMount } from 'svelte';
 	import { getContextClient } from '@urql/svelte';
+	import { createTaskAPI } from '$lib/api';
 	import { formatDate } from '$utils';
 	import { resolve } from '$app/paths';
+	import { goto } from '$app/navigation';
 
 	const client = getContextClient();
+	const taskAPI = createTaskAPI(client);
 
 	interface ComponentProps {
 		data: {
@@ -17,54 +19,28 @@
 	let { data }: ComponentProps = $props();
 
 	let taskId: string = $derived(data.taskId);
-	let task: ITaskResponse | undefined = $state();
 	let loading = $state(true);
-	let error = $state('');
 	let deleteLoading = $state(false);
 
 	onMount(async () => {
-		const cachedTask = taskStore.getTask(taskId);
-
-		if (cachedTask) {
-			task = cachedTask;
-			loading = false;
-			fetchTaskInBackground();
-		} else {
-			await fetchTask();
-		}
+		await fetchTask();
+		loading = false;
 	});
 
 	async function fetchTask() {
-		loading = true;
-		error = '';
-
 		try {
-			const data = await client.query(TASK_QUERIES.GET_TASK, { id: taskId });
-			if (data.error) {
-				error = data.error.message || 'Failed to fetch task';
-			} else if (data.data?.task) {
-				task = data.data.task;
-				taskStore.setTask(data.data.task);
+			const task = await taskAPI.getTask(taskId);
+			if (task) {
+				taskStore.setIndividualPage(task, '');
 			} else {
-				error = 'Task not found';
+				taskStore.setIndividualPage(undefined, 'Task not found');
 			}
 		} catch (err) {
 			console.error('Error fetching task:', err);
-			error = err instanceof Error ? err.message : 'An error occurred';
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function fetchTaskInBackground() {
-		try {
-			const data = await client.query(TASK_QUERIES.GET_TASK, { id: taskId });
-			if (data.data?.task) {
-				task = data.data.task;
-				taskStore.setTask(data.data.task);
-			}
-		} catch (err) {
-			console.error('Background fetch failed:', err);
+			taskStore.setIndividualPage(
+				undefined,
+				err instanceof Error ? err.message : 'An error occurred'
+			);
 		}
 	}
 
@@ -73,20 +49,22 @@
 			return;
 		}
 		deleteLoading = true;
-		error = '';
 
 		try {
-			const result = await client.mutation(TASK_QUERIES.DELETE_TASK, { id: taskId });
+			const success = await taskAPI.deleteTask(taskId);
 
-			if (result.data?.deleteTask) {
+			if (success) {
 				taskStore.invalidate(taskId);
-				window.location.href = '/dashboard/tasks';
+				goto(resolve('/dashboard/tasks'));
 			} else {
-				error = result.error?.message || 'Failed to delete task';
+				taskStore.setIndividualPage(undefined, 'Failed to delete task');
 			}
 		} catch (err) {
 			console.error('Error deleting task:', err);
-			error = err instanceof Error ? err.message : 'An error occurred';
+			taskStore.setIndividualPage(
+				undefined,
+				err instanceof Error ? err.message : 'An error occurred'
+			);
 		} finally {
 			deleteLoading = false;
 		}
@@ -118,14 +96,14 @@
 				class="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-indigo-600"
 			></div>
 		</div>
-	{:else if error}
+	{:else if $taskStore.individualPage.error}
 		<div
 			class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 sm:px-6 sm:py-4 rounded-lg text-sm sm:text-base"
 		>
 			<p class="font-medium">Error</p>
-			<p class="mt-1">{error}</p>
+			<p class="mt-1">{$taskStore.individualPage.error}</p>
 		</div>
-	{:else if task}
+	{:else if $taskStore.individualPage.task}
 		<div class="bg-white shadow-lg rounded-xl overflow-hidden">
 			<!-- Task Header -->
 			<div
@@ -134,16 +112,16 @@
 				<div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
 					<div class="flex-1 min-w-0">
 						<h1 class="text-2xl sm:text-3xl font-bold text-white mb-2 sm:mb-3 break-words">
-							{task.title}
+							{$taskStore.individualPage.task.title}
 						</h1>
 						<div class="flex flex-wrap items-center gap-2">
-							<TaskTag taskStatus={task.status} />
-							<TaskTag taskPriority={task.priority} />
+							<TaskTag taskStatus={$taskStore.individualPage.task.status} />
+							<TaskTag taskPriority={$taskStore.individualPage.task.priority} />
 						</div>
 					</div>
 					<div class="flex items-center gap-1.5 sm:gap-2 justify-end sm:justify-start">
 						<a
-							href={resolve(`/dashboard/tasks/${task.id}/edit`)}
+							href={resolve(`/dashboard/tasks/${$taskStore.individualPage.task.id}/edit`)}
 							class="px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium inline-flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
 						>
 							<svg
@@ -190,11 +168,11 @@
 				<!-- Description -->
 				<div class="mb-4 sm:mb-6">
 					<h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">Description</h2>
-					{#if task.description}
+					{#if $taskStore.individualPage.task.description}
 						<p
 							class="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap break-words"
 						>
-							{task.description}
+							{$taskStore.individualPage.task.description}
 						</p>
 					{:else}
 						<p class="text-sm sm:text-base text-gray-400 italic">No description provided</p>
@@ -208,18 +186,18 @@
 					<div>
 						<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">Status</h3>
 						<div class="flex items-center gap-2">
-							<TaskTag taskStatus={task.status} />
+							<TaskTag taskStatus={$taskStore.individualPage.task.status} />
 						</div>
 					</div>
 
 					<div>
 						<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">Priority</h3>
 						<div class="flex items-center gap-2">
-							<TaskTag taskPriority={task.priority} />
+							<TaskTag taskPriority={$taskStore.individualPage.task.priority} />
 						</div>
 					</div>
 
-					{#if task.dueDate}
+					{#if $taskStore.individualPage.task.dueDate}
 						<div>
 							<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">Due Date</h3>
 							<p class="text-sm sm:text-base text-gray-900 flex items-center gap-1.5 sm:gap-2">
@@ -236,12 +214,12 @@
 										d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
 									/>
 								</svg>
-								<span class="truncate">{formatDate(task.dueDate)}</span>
+								<span class="truncate">{formatDate($taskStore.individualPage.task.dueDate)}</span>
 							</p>
 						</div>
 					{/if}
 
-					{#if task.assignedTo}
+					{#if $taskStore.individualPage.task.assignedTo}
 						<div>
 							<h3 class="text-xs sm:text-sm font-medium text-gray-500 mb-1.5 sm:mb-2">
 								Assigned To
@@ -260,7 +238,7 @@
 										d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
 									/>
 								</svg>
-								<span class="truncate">{task.assignedTo}</span>
+								<span class="truncate">{$taskStore.individualPage.task.assignedTo}</span>
 							</p>
 						</div>
 					{/if}
@@ -281,7 +259,7 @@
 									d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
 								/>
 							</svg>
-							<span class="truncate">{task.createdBy}</span>
+							<span class="truncate">{$taskStore.individualPage.task.createdBy}</span>
 						</p>
 					</div>
 
@@ -301,7 +279,7 @@
 									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
 								/>
 							</svg>
-							<span class="truncate">{formatDate(task.createdAt)}</span>
+							<span class="truncate">{formatDate($taskStore.individualPage.task.createdAt)}</span>
 						</p>
 					</div>
 
@@ -323,7 +301,7 @@
 									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
 								/>
 							</svg>
-							<span class="truncate">{formatDate(task.updatedAt)}</span>
+							<span class="truncate">{formatDate($taskStore.individualPage.task.updatedAt)}</span>
 						</p>
 					</div>
 				</div>

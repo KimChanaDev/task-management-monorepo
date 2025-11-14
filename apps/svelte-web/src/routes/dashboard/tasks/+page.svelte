@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { getContextClient } from '@urql/svelte';
 	import { onMount } from 'svelte';
-	import { TASK_QUERIES, type IMyTaskFilterInput, type ITaskResponse } from '$lib/graphql';
+	import { type IMyTaskFilterInput } from '$lib/graphql';
+	import { createTaskAPI } from '$lib/api';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
 	import { toTitleCaseFromEnum } from '$utils';
 	import { TaskBlock } from '$components';
@@ -9,8 +10,8 @@
 	import { resolve } from '$app/paths';
 
 	const client = getContextClient();
+	const taskAPI = createTaskAPI(client);
 
-	let tasks = $state<ITaskResponse[]>([]);
 	let isLoading = $state(true);
 	let filterStatus = $state('');
 	let filterPriority = $state('');
@@ -36,12 +37,12 @@
 				page: currentPage,
 				limit: pageSize
 			};
-			const result = await client.query(TASK_QUERIES.GET_MY_TASKS, { filter });
-
-			if (result.data?.myTasks) {
-				tasks = result.data.myTasks.tasks;
-				totalTasks = result.data.myTasks.total || tasks.length;
-				taskStore.setTasks(tasks);
+			const result = await taskAPI.getMyTasks(filter);
+			if (result) {
+				totalTasks = result.total || result.tasks.length;
+				taskStore.setTasks(result.tasks);
+			} else {
+				console.error('Failed to fetch tasks data');
 			}
 		} catch (error) {
 			console.error('Failed to fetch tasks:', error);
@@ -76,17 +77,16 @@
 		fetchTasks();
 	}
 
-	async function deleteTask(taskId: string) {
+	async function handleDeleteTask(taskId: string) {
 		if (!confirm('Are you sure you want to delete this task?')) {
 			return;
 		}
 
 		try {
-			const result = await client.mutation(TASK_QUERIES.DELETE_TASK, { id: taskId });
+			const success = await taskAPI.deleteTask(taskId);
 
-			if (result.data?.deleteTask) {
-				tasks = tasks.filter((t) => t.id !== taskId);
-				taskStore.invalidate(taskId);
+			if (success) {
+				fetchTasks();
 			}
 		} catch (error) {
 			console.error('Failed to delete task:', error);
@@ -180,7 +180,7 @@
 					class="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-indigo-600"
 				></div>
 			</div>
-		{:else if tasks.length === 0}
+		{:else if $taskStore.tasks.length === 0}
 			<div class="text-center py-8 sm:py-12 px-4">
 				<svg
 					class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400"
@@ -204,15 +204,15 @@
 			</div>
 		{:else}
 			<div class="divide-y divide-gray-200">
-				{#each tasks as task (task.id)}
-					<TaskBlock {task} deleteTask={() => deleteTask(task.id)}></TaskBlock>
+				{#each $taskStore.tasks as task (task.id)}
+					<TaskBlock {task} deleteTask={() => handleDeleteTask(task.id)}></TaskBlock>
 				{/each}
 			</div>
 		{/if}
 	</div>
 
 	<!-- Pagination -->
-	{#if !isLoading && tasks.length > 0}
+	{#if !isLoading && $taskStore.tasks.length > 0}
 		<div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4">
 			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
 				<!-- Page size selector -->
