@@ -125,53 +125,31 @@ export interface TaskServiceClient {
 
   getUserTasks(request: GetUserTasksRequest): Observable<TasksResponse>;
 
-  getDashboardData(
-    request: GetDashboardDataRequest,
-  ): Observable<GetDashboardDataResponse>;
+  getDashboardData(request: GetDashboardDataRequest): Observable<GetDashboardDataResponse>;
 }
 
 export interface TaskServiceController {
-  createTask(
-    request: CreateTaskRequest,
-  ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
+  createTask(request: CreateTaskRequest): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
-  getTask(
-    request: GetTaskRequest,
-  ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
+  getTask(request: GetTaskRequest): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
-  getTasks(
-    request: GetTasksRequest,
-  ): Promise<TasksResponse> | Observable<TasksResponse> | TasksResponse;
+  getTasks(request: GetTasksRequest): Promise<TasksResponse> | Observable<TasksResponse> | TasksResponse;
 
-  updateTask(
-    request: UpdateTaskRequest,
-  ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
+  updateTask(request: UpdateTaskRequest): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
   deleteTask(
     request: DeleteTaskRequest,
-  ):
-    | Promise<DeleteTaskResponse>
-    | Observable<DeleteTaskResponse>
-    | DeleteTaskResponse;
+  ): Promise<DeleteTaskResponse> | Observable<DeleteTaskResponse> | DeleteTaskResponse;
 
-  assignTask(
-    request: AssignTaskRequest,
-  ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
+  assignTask(request: AssignTaskRequest): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
-  updateTaskStatus(
-    request: UpdateTaskStatusRequest,
-  ): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
+  updateTaskStatus(request: UpdateTaskStatusRequest): Promise<TaskResponse> | Observable<TaskResponse> | TaskResponse;
 
-  getUserTasks(
-    request: GetUserTasksRequest,
-  ): Promise<TasksResponse> | Observable<TasksResponse> | TasksResponse;
+  getUserTasks(request: GetUserTasksRequest): Promise<TasksResponse> | Observable<TasksResponse> | TasksResponse;
 
   getDashboardData(
     request: GetDashboardDataRequest,
-  ):
-    | Promise<GetDashboardDataResponse>
-    | Observable<GetDashboardDataResponse>
-    | GetDashboardDataResponse;
+  ): Promise<GetDashboardDataResponse> | Observable<GetDashboardDataResponse> | GetDashboardDataResponse;
 }
 
 export function TaskServiceControllerMethods() {
@@ -188,27 +166,13 @@ export function TaskServiceControllerMethods() {
       "getDashboardData",
     ];
     for (const method of grpcMethods) {
-      const descriptor: any = Reflect.getOwnPropertyDescriptor(
-        constructor.prototype,
-        method,
-      );
-      GrpcMethod("TaskService", method)(
-        constructor.prototype[method],
-        method,
-        descriptor,
-      );
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod("TaskService", method)(constructor.prototype[method], method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
-      const descriptor: any = Reflect.getOwnPropertyDescriptor(
-        constructor.prototype,
-        method,
-      );
-      GrpcStreamMethod("TaskService", method)(
-        constructor.prototype[method],
-        method,
-        descriptor,
-      );
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod("TaskService", method)(constructor.prototype[method], method, descriptor);
     }
   };
 }

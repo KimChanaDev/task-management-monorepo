@@ -223,88 +223,51 @@ export interface ProductivityComparisonResponse {
 }
 
 export interface AnalyticsServiceClient {
-  getUserProductivity(
-    request: GetUserProductivityRequest,
-  ): Observable<UserProductivityResponse>;
+  getUserProductivity(request: GetUserProductivityRequest): Observable<UserProductivityResponse>;
 
-  getTaskMetrics(
-    request: GetTaskMetricsRequest,
-  ): Observable<TaskMetricsResponse>;
+  getTaskMetrics(request: GetTaskMetricsRequest): Observable<TaskMetricsResponse>;
 
-  getTeamAnalytics(
-    request: GetTeamAnalyticsRequest,
-  ): Observable<TeamAnalyticsResponse>;
+  getTeamAnalytics(request: GetTeamAnalyticsRequest): Observable<TeamAnalyticsResponse>;
 
-  getTrendAnalysis(
-    request: GetTrendAnalysisRequest,
-  ): Observable<TrendAnalysisResponse>;
+  getTrendAnalysis(request: GetTrendAnalysisRequest): Observable<TrendAnalysisResponse>;
 
-  getPriorityDistribution(
-    request: GetPriorityDistributionRequest,
-  ): Observable<PriorityDistributionResponse>;
+  getPriorityDistribution(request: GetPriorityDistributionRequest): Observable<PriorityDistributionResponse>;
 
-  getStatusDistribution(
-    request: GetStatusDistributionRequest,
-  ): Observable<StatusDistributionResponse>;
+  getStatusDistribution(request: GetStatusDistributionRequest): Observable<StatusDistributionResponse>;
 
-  getUserActivityHeatmap(
-    request: GetUserActivityHeatmapRequest,
-  ): Observable<UserActivityHeatmapResponse>;
+  getUserActivityHeatmap(request: GetUserActivityHeatmapRequest): Observable<UserActivityHeatmapResponse>;
 
-  getProductivityComparison(
-    request: GetProductivityComparisonRequest,
-  ): Observable<ProductivityComparisonResponse>;
+  getProductivityComparison(request: GetProductivityComparisonRequest): Observable<ProductivityComparisonResponse>;
 }
 
 export interface AnalyticsServiceController {
   getUserProductivity(
     request: GetUserProductivityRequest,
-  ):
-    | Promise<UserProductivityResponse>
-    | Observable<UserProductivityResponse>
-    | UserProductivityResponse;
+  ): Promise<UserProductivityResponse> | Observable<UserProductivityResponse> | UserProductivityResponse;
 
   getTaskMetrics(
     request: GetTaskMetricsRequest,
-  ):
-    | Promise<TaskMetricsResponse>
-    | Observable<TaskMetricsResponse>
-    | TaskMetricsResponse;
+  ): Promise<TaskMetricsResponse> | Observable<TaskMetricsResponse> | TaskMetricsResponse;
 
   getTeamAnalytics(
     request: GetTeamAnalyticsRequest,
-  ):
-    | Promise<TeamAnalyticsResponse>
-    | Observable<TeamAnalyticsResponse>
-    | TeamAnalyticsResponse;
+  ): Promise<TeamAnalyticsResponse> | Observable<TeamAnalyticsResponse> | TeamAnalyticsResponse;
 
   getTrendAnalysis(
     request: GetTrendAnalysisRequest,
-  ):
-    | Promise<TrendAnalysisResponse>
-    | Observable<TrendAnalysisResponse>
-    | TrendAnalysisResponse;
+  ): Promise<TrendAnalysisResponse> | Observable<TrendAnalysisResponse> | TrendAnalysisResponse;
 
   getPriorityDistribution(
     request: GetPriorityDistributionRequest,
-  ):
-    | Promise<PriorityDistributionResponse>
-    | Observable<PriorityDistributionResponse>
-    | PriorityDistributionResponse;
+  ): Promise<PriorityDistributionResponse> | Observable<PriorityDistributionResponse> | PriorityDistributionResponse;
 
   getStatusDistribution(
     request: GetStatusDistributionRequest,
-  ):
-    | Promise<StatusDistributionResponse>
-    | Observable<StatusDistributionResponse>
-    | StatusDistributionResponse;
+  ): Promise<StatusDistributionResponse> | Observable<StatusDistributionResponse> | StatusDistributionResponse;
 
   getUserActivityHeatmap(
     request: GetUserActivityHeatmapRequest,
-  ):
-    | Promise<UserActivityHeatmapResponse>
-    | Observable<UserActivityHeatmapResponse>
-    | UserActivityHeatmapResponse;
+  ): Promise<UserActivityHeatmapResponse> | Observable<UserActivityHeatmapResponse> | UserActivityHeatmapResponse;
 
   getProductivityComparison(
     request: GetProductivityComparisonRequest,
@@ -327,27 +290,13 @@ export function AnalyticsServiceControllerMethods() {
       "getProductivityComparison",
     ];
     for (const method of grpcMethods) {
-      const descriptor: any = Reflect.getOwnPropertyDescriptor(
-        constructor.prototype,
-        method,
-      );
-      GrpcMethod("AnalyticsService", method)(
-        constructor.prototype[method],
-        method,
-        descriptor,
-      );
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod("AnalyticsService", method)(constructor.prototype[method], method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
-      const descriptor: any = Reflect.getOwnPropertyDescriptor(
-        constructor.prototype,
-        method,
-      );
-      GrpcStreamMethod("AnalyticsService", method)(
-        constructor.prototype[method],
-        method,
-        descriptor,
-      );
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod("AnalyticsService", method)(constructor.prototype[method], method, descriptor);
     }
   };
 }
