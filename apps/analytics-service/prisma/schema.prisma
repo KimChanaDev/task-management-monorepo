@@ -1,0 +1,117 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../../node_modules/@prisma/client/analytics-service"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// Task Event for time-series analytics
+model TaskEvent {
+    id         String   @id @default(uuid())
+    taskId     String
+    userId     String
+    eventType  String // CREATED, UPDATED, COMPLETED, DELETED, STATUS_CHANGED, ASSIGNED
+    status     String? // TODO, IN_PROGRESS, REVIEW, COMPLETED, CANCELLED
+    priority   String? // LOW, MEDIUM, HIGH, URGENT
+    assignedTo String?
+    metadata   Json? // Additional event data
+    timestamp  DateTime @default(now()) @db.Timestamptz(6)
+
+    @@index([taskId])
+    @@index([userId])
+    @@index([eventType])
+    @@index([timestamp(sort: Desc)])
+    @@map("task_events")
+}
+
+// User productivity metrics aggregated by day
+model UserProductivity {
+    id                    String   @id @default(uuid())
+    userId                String
+    date                  DateTime @db.Date
+    tasksCreated          Int      @default(0)
+    tasksCompleted        Int      @default(0)
+    tasksInProgress       Int      @default(0)
+    tasksOverdue          Int      @default(0)
+    totalCompletionTime   Int      @default(0) // in minutes
+    averageCompletionTime Float? // in minutes
+    productivityScore     Float? // 0-100 score
+    timestamp             DateTime @default(now()) @db.Timestamptz(6)
+
+    @@unique([userId, date])
+    @@index([userId])
+    @@index([date(sort: Desc)])
+    @@map("user_productivity")
+}
+
+// Task metrics aggregated by day
+model TaskMetrics {
+    id                    String   @id @default(uuid())
+    date                  DateTime @db.Date
+    totalTasks            Int      @default(0)
+    tasksCreated          Int      @default(0)
+    tasksCompleted        Int      @default(0)
+    tasksInProgress       Int      @default(0)
+    tasksInReview         Int      @default(0)
+    tasksCancelled        Int      @default(0)
+    tasksOverdue          Int      @default(0)
+    completionRate        Float? // percentage
+    averageCompletionTime Float? // in minutes
+    timestamp             DateTime @default(now()) @db.Timestamptz(6)
+
+    @@unique([date])
+    @@index([date(sort: Desc)])
+    @@map("task_metrics")
+}
+
+// Team/Organization analytics
+model TeamAnalytics {
+    id                    String   @id @default(uuid())
+    teamId                String?  @default("default")
+    date                  DateTime @db.Date
+    activeUsers           Int      @default(0)
+    totalTasksCreated     Int      @default(0)
+    totalTasksCompleted   Int      @default(0)
+    teamProductivityScore Float? // 0-100 score
+    collaborationScore    Float? // 0-100 score
+    timestamp             DateTime @default(now()) @db.Timestamptz(6)
+
+    @@unique([teamId, date])
+    @@index([teamId])
+    @@index([date(sort: Desc)])
+    @@map("team_analytics")
+}
+
+// Priority distribution over time
+model PriorityDistribution {
+    id        String   @id @default(uuid())
+    date      DateTime @db.Date
+    low       Int      @default(0)
+    medium    Int      @default(0)
+    high      Int      @default(0)
+    urgent    Int      @default(0)
+    timestamp DateTime @default(now()) @db.Timestamptz(6)
+
+    @@unique([date])
+    @@index([date(sort: Desc)])
+    @@map("priority_distribution")
+}
+
+// Status distribution over time
+model StatusDistribution {
+    id         String   @id @default(uuid())
+    date       DateTime @db.Date
+    todo       Int      @default(0)
+    inProgress Int      @default(0)
+    review     Int      @default(0)
+    completed  Int      @default(0)
+    cancelled  Int      @default(0)
+    timestamp  DateTime @default(now()) @db.Timestamptz(6)
+
+    @@unique([date])
+    @@index([date(sort: Desc)])
+    @@map("status_distribution")
+}

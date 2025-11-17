@@ -23,6 +23,10 @@
       "types": "./shared-types/task.ts",
       "default": "./dist/shared-types/task.js"
     },
+    "./analytics": {
+      "types": "./shared-types/analytics.ts",
+      "default": "./dist/shared-types/analytics.js"
+    },
     "./exception": {
       "types": "./src/rpc.exceptions.ts",
       "default": "./dist/src/rpc.exceptions.js"

@@ -1,0 +1,222 @@
+syntax = "proto3";
+
+package analytics;
+
+service AnalyticsService {
+  rpc GetUserProductivity(GetUserProductivityRequest) returns (UserProductivityResponse);
+  rpc GetTaskMetrics(GetTaskMetricsRequest) returns (TaskMetricsResponse);
+  rpc GetTeamAnalytics(GetTeamAnalyticsRequest) returns (TeamAnalyticsResponse);
+  rpc GetTrendAnalysis(GetTrendAnalysisRequest) returns (TrendAnalysisResponse);
+  rpc GetPriorityDistribution(GetPriorityDistributionRequest) returns (PriorityDistributionResponse);
+  rpc GetStatusDistribution(GetStatusDistributionRequest) returns (StatusDistributionResponse);
+  rpc GetUserActivityHeatmap(GetUserActivityHeatmapRequest) returns (UserActivityHeatmapResponse);
+  rpc GetProductivityComparison(GetProductivityComparisonRequest) returns (ProductivityComparisonResponse);
+}
+
+// User Productivity
+message GetUserProductivityRequest {
+  string userId = 1;
+  string startDate = 2;
+  string endDate = 3;
+  string granularity = 4; // DAY, WEEK, MONTH
+}
+
+message UserProductivityData {
+  string date = 1;
+  int32 tasksCreated = 2;
+  int32 tasksCompleted = 3;
+  int32 tasksInProgress = 4;
+  int32 tasksOverdue = 5;
+  double averageCompletionTime = 6;
+  double productivityScore = 7;
+}
+
+message UserProductivityResponse {
+  repeated UserProductivityData data = 1;
+  UserProductivitySummary summary = 2;
+}
+
+message UserProductivitySummary {
+  int32 totalTasksCreated = 1;
+  int32 totalTasksCompleted = 2;
+  double averageProductivityScore = 3;
+  double completionRate = 4;
+  double averageCompletionTime = 5;
+}
+
+// Task Metrics
+message GetTaskMetricsRequest {
+  string startDate = 1;
+  string endDate = 2;
+  string granularity = 3; // DAY, WEEK, MONTH
+}
+
+message TaskMetricsData {
+  string date = 1;
+  int32 totalTasks = 2;
+  int32 tasksCreated = 3;
+  int32 tasksCompleted = 4;
+  int32 tasksInProgress = 5;
+  int32 tasksInReview = 6;
+  int32 tasksCancelled = 7;
+  int32 tasksOverdue = 8;
+  double completionRate = 9;
+  double averageCompletionTime = 10;
+}
+
+message TaskMetricsResponse {
+  repeated TaskMetricsData data = 1;
+  TaskMetricsSummary summary = 2;
+}
+
+message TaskMetricsSummary {
+  int32 totalTasks = 1;
+  int32 totalCompleted = 2;
+  double overallCompletionRate = 3;
+  double averageCompletionTime = 4;
+}
+
+// Team Analytics
+message GetTeamAnalyticsRequest {
+  string teamId = 1;
+  string startDate = 2;
+  string endDate = 3;
+  string granularity = 4; // DAY, WEEK, MONTH
+}
+
+message TeamAnalyticsData {
+  string date = 1;
+  int32 activeUsers = 2;
+  int32 totalTasksCreated = 3;
+  int32 totalTasksCompleted = 4;
+  double teamProductivityScore = 5;
+  double collaborationScore = 6;
+}
+
+message TeamAnalyticsResponse {
+  repeated TeamAnalyticsData data = 1;
+  TeamAnalyticsSummary summary = 2;
+}
+
+message TeamAnalyticsSummary {
+  int32 totalActiveUsers = 1;
+  int32 totalTasks = 2;
+  int32 totalCompleted = 3;
+  double averageProductivityScore = 4;
+  double averageCollaborationScore = 5;
+}
+
+// Trend Analysis
+message GetTrendAnalysisRequest {
+  string userId = 1;
+  string metric = 2; // PRODUCTIVITY, COMPLETION_RATE, COMPLETION_TIME
+  string startDate = 3;
+  string endDate = 4;
+}
+
+message TrendDataPoint {
+  string date = 1;
+  double value = 2;
+}
+
+message TrendAnalysisResponse {
+  repeated TrendDataPoint data = 1;
+  string trend = 2; // INCREASING, DECREASING, STABLE
+  double changePercentage = 3;
+  double average = 4;
+}
+
+// Priority Distribution
+message GetPriorityDistributionRequest {
+  string startDate = 1;
+  string endDate = 2;
+}
+
+message PriorityDistributionData {
+  string date = 1;
+  int32 low = 2;
+  int32 medium = 3;
+  int32 high = 4;
+  int32 urgent = 5;
+}
+
+message PriorityDistributionResponse {
+  repeated PriorityDistributionData data = 1;
+  PriorityDistributionSummary summary = 2;
+}
+
+message PriorityDistributionSummary {
+  int32 totalLow = 1;
+  int32 totalMedium = 2;
+  int32 totalHigh = 3;
+  int32 totalUrgent = 4;
+}
+
+// Status Distribution
+message GetStatusDistributionRequest {
+  string startDate = 1;
+  string endDate = 2;
+}
+
+message StatusDistributionData {
+  string date = 1;
+  int32 todo = 2;
+  int32 inProgress = 3;
+  int32 review = 4;
+  int32 completed = 5;
+  int32 cancelled = 6;
+}
+
+message StatusDistributionResponse {
+  repeated StatusDistributionData data = 1;
+  StatusDistributionSummary summary = 2;
+}
+
+message StatusDistributionSummary {
+  int32 totalTodo = 1;
+  int32 totalInProgress = 2;
+  int32 totalReview = 3;
+  int32 totalCompleted = 4;
+  int32 totalCancelled = 5;
+}
+
+// User Activity Heatmap
+message GetUserActivityHeatmapRequest {
+  string userId = 1;
+  string startDate = 2;
+  string endDate = 3;
+}
+
+message HeatmapDataPoint {
+  string date = 1;
+  int32 hour = 2; // 0-23
+  int32 activityCount = 3;
+}
+
+message UserActivityHeatmapResponse {
+  repeated HeatmapDataPoint data = 1;
+  int32 totalActivities = 2;
+  int32 peakHour = 3;
+  int32 peakDay = 4;
+}
+
+// Productivity Comparison
+message GetProductivityComparisonRequest {
+  repeated string userIds = 1;
+  string startDate = 2;
+  string endDate = 3;
+}
+
+message UserProductivityComparison {
+  string userId = 1;
+  int32 tasksCompleted = 2;
+  double productivityScore = 3;
+  double completionRate = 4;
+  double averageCompletionTime = 5;
+}
+
+message ProductivityComparisonResponse {
+  repeated UserProductivityComparison users = 1;
+  string topPerformer = 2;
+  double averageProductivityScore = 3;
+}
