@@ -5,12 +5,14 @@ import {
   AnalyticsServiceClient,
   GetUserProductivityRequest,
   GetTaskMetricsRequest,
-  GetTeamAnalyticsRequest,
-  GetTrendAnalysisRequest,
   GetPriorityDistributionRequest,
   GetStatusDistributionRequest,
   GetUserActivityHeatmapRequest,
-  GetProductivityComparisonRequest,
+  UserProductivityResponse,
+  TaskMetricsResponse,
+  PriorityDistributionResponse,
+  StatusDistributionResponse,
+  UserActivityHeatmapResponse,
 } from '@repo/grpc/analytics';
 import { ProtoPackage } from '@repo/grpc/package';
 import { GrpcCall } from '../utilities/grpc-call.handler';
@@ -28,61 +30,66 @@ export class AnalyticsService implements OnModuleInit {
     );
   }
 
-  async getUserProductivity(data: GetUserProductivityRequest) {
+  async getUserProductivity(
+    data: GetUserProductivityRequest,
+  ): Promise<UserProductivityResponse> {
     return await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(
         this.analyticsGrpcService.getUserProductivity(data),
       );
+    }).then((response) => {
+      if (!response.data) response.data = [];
+      return response;
     });
   }
 
-  async getTaskMetrics(data: GetTaskMetricsRequest) {
+  async getTaskMetrics(
+    data: GetTaskMetricsRequest,
+  ): Promise<TaskMetricsResponse> {
     return await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(this.analyticsGrpcService.getTaskMetrics(data));
+    }).then((response) => {
+      if (!response.data) response.data = [];
+      return response;
     });
   }
 
-  async getTeamAnalytics(data: GetTeamAnalyticsRequest) {
-    return await GrpcCall.callByHandlerException(() => {
-      return firstValueFrom(this.analyticsGrpcService.getTeamAnalytics(data));
-    });
-  }
-
-  async getTrendAnalysis(data: GetTrendAnalysisRequest) {
-    return await GrpcCall.callByHandlerException(() => {
-      return firstValueFrom(this.analyticsGrpcService.getTrendAnalysis(data));
-    });
-  }
-
-  async getPriorityDistribution(data: GetPriorityDistributionRequest) {
+  async getPriorityDistribution(
+    data: GetPriorityDistributionRequest,
+  ): Promise<PriorityDistributionResponse> {
     return await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(
         this.analyticsGrpcService.getPriorityDistribution(data),
       );
+    }).then((response) => {
+      if (!response.data) response.data = [];
+      return response;
     });
   }
 
-  async getStatusDistribution(data: GetStatusDistributionRequest) {
+  async getStatusDistribution(
+    data: GetStatusDistributionRequest,
+  ): Promise<StatusDistributionResponse> {
     return await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(
         this.analyticsGrpcService.getStatusDistribution(data),
       );
+    }).then((response) => {
+      if (!response.data) response.data = [];
+      return response;
     });
   }
 
-  async getUserActivityHeatmap(data: GetUserActivityHeatmapRequest) {
+  async getUserActivityHeatmap(
+    data: GetUserActivityHeatmapRequest,
+  ): Promise<UserActivityHeatmapResponse> {
     return await GrpcCall.callByHandlerException(() => {
       return firstValueFrom(
         this.analyticsGrpcService.getUserActivityHeatmap(data),
       );
-    });
-  }
-
-  async getProductivityComparison(data: GetProductivityComparisonRequest) {
-    return await GrpcCall.callByHandlerException(() => {
-      return firstValueFrom(
-        this.analyticsGrpcService.getProductivityComparison(data),
-      );
+    }).then((response) => {
+      if (!response.data) response.data = [];
+      return response;
     });
   }
 }

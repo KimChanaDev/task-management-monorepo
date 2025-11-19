@@ -73,59 +73,6 @@ export interface TaskMetricsSummary {
   averageCompletionTime: number;
 }
 
-/** Team Analytics */
-export interface GetTeamAnalyticsRequest {
-  teamId: string;
-  startDate: string;
-  endDate: string;
-  /** DAY, WEEK, MONTH */
-  granularity: string;
-}
-
-export interface TeamAnalyticsData {
-  date: string;
-  activeUsers: number;
-  totalTasksCreated: number;
-  totalTasksCompleted: number;
-  teamProductivityScore: number;
-  collaborationScore: number;
-}
-
-export interface TeamAnalyticsResponse {
-  data: TeamAnalyticsData[];
-  summary: TeamAnalyticsSummary | undefined;
-}
-
-export interface TeamAnalyticsSummary {
-  totalActiveUsers: number;
-  totalTasks: number;
-  totalCompleted: number;
-  averageProductivityScore: number;
-  averageCollaborationScore: number;
-}
-
-/** Trend Analysis */
-export interface GetTrendAnalysisRequest {
-  userId: string;
-  /** PRODUCTIVITY, COMPLETION_RATE, COMPLETION_TIME */
-  metric: string;
-  startDate: string;
-  endDate: string;
-}
-
-export interface TrendDataPoint {
-  date: string;
-  value: number;
-}
-
-export interface TrendAnalysisResponse {
-  data: TrendDataPoint[];
-  /** INCREASING, DECREASING, STABLE */
-  trend: string;
-  changePercentage: number;
-  average: number;
-}
-
 /** Priority Distribution */
 export interface GetPriorityDistributionRequest {
   startDate: string;
@@ -198,28 +145,6 @@ export interface UserActivityHeatmapResponse {
   data: HeatmapDataPoint[];
   totalActivities: number;
   peakHour: number;
-  peakDay: number;
-}
-
-/** Productivity Comparison */
-export interface GetProductivityComparisonRequest {
-  userIds: string[];
-  startDate: string;
-  endDate: string;
-}
-
-export interface UserProductivityComparison {
-  userId: string;
-  tasksCompleted: number;
-  productivityScore: number;
-  completionRate: number;
-  averageCompletionTime: number;
-}
-
-export interface ProductivityComparisonResponse {
-  users: UserProductivityComparison[];
-  topPerformer: string;
-  averageProductivityScore: number;
 }
 
 export interface AnalyticsServiceClient {
@@ -227,17 +152,11 @@ export interface AnalyticsServiceClient {
 
   getTaskMetrics(request: GetTaskMetricsRequest): Observable<TaskMetricsResponse>;
 
-  getTeamAnalytics(request: GetTeamAnalyticsRequest): Observable<TeamAnalyticsResponse>;
-
-  getTrendAnalysis(request: GetTrendAnalysisRequest): Observable<TrendAnalysisResponse>;
-
   getPriorityDistribution(request: GetPriorityDistributionRequest): Observable<PriorityDistributionResponse>;
 
   getStatusDistribution(request: GetStatusDistributionRequest): Observable<StatusDistributionResponse>;
 
   getUserActivityHeatmap(request: GetUserActivityHeatmapRequest): Observable<UserActivityHeatmapResponse>;
-
-  getProductivityComparison(request: GetProductivityComparisonRequest): Observable<ProductivityComparisonResponse>;
 }
 
 export interface AnalyticsServiceController {
@@ -248,14 +167,6 @@ export interface AnalyticsServiceController {
   getTaskMetrics(
     request: GetTaskMetricsRequest,
   ): Promise<TaskMetricsResponse> | Observable<TaskMetricsResponse> | TaskMetricsResponse;
-
-  getTeamAnalytics(
-    request: GetTeamAnalyticsRequest,
-  ): Promise<TeamAnalyticsResponse> | Observable<TeamAnalyticsResponse> | TeamAnalyticsResponse;
-
-  getTrendAnalysis(
-    request: GetTrendAnalysisRequest,
-  ): Promise<TrendAnalysisResponse> | Observable<TrendAnalysisResponse> | TrendAnalysisResponse;
 
   getPriorityDistribution(
     request: GetPriorityDistributionRequest,
@@ -268,13 +179,6 @@ export interface AnalyticsServiceController {
   getUserActivityHeatmap(
     request: GetUserActivityHeatmapRequest,
   ): Promise<UserActivityHeatmapResponse> | Observable<UserActivityHeatmapResponse> | UserActivityHeatmapResponse;
-
-  getProductivityComparison(
-    request: GetProductivityComparisonRequest,
-  ):
-    | Promise<ProductivityComparisonResponse>
-    | Observable<ProductivityComparisonResponse>
-    | ProductivityComparisonResponse;
 }
 
 export function AnalyticsServiceControllerMethods() {
@@ -282,12 +186,9 @@ export function AnalyticsServiceControllerMethods() {
     const grpcMethods: string[] = [
       "getUserProductivity",
       "getTaskMetrics",
-      "getTeamAnalytics",
-      "getTrendAnalysis",
       "getPriorityDistribution",
       "getStatusDistribution",
       "getUserActivityHeatmap",
-      "getProductivityComparison",
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);

@@ -67,24 +67,6 @@ model TaskMetrics {
     @@map("task_metrics")
 }
 
-// Team/Organization analytics
-model TeamAnalytics {
-    id                    String   @id @default(uuid())
-    teamId                String?  @default("default")
-    date                  DateTime @db.Date
-    activeUsers           Int      @default(0)
-    totalTasksCreated     Int      @default(0)
-    totalTasksCompleted   Int      @default(0)
-    teamProductivityScore Float? // 0-100 score
-    collaborationScore    Float? // 0-100 score
-    timestamp             DateTime @default(now()) @db.Timestamptz(6)
-
-    @@unique([teamId, date])
-    @@index([teamId])
-    @@index([date(sort: Desc)])
-    @@map("team_analytics")
-}
-
 // Priority distribution over time
 model PriorityDistribution {
     id        String   @id @default(uuid())

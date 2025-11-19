@@ -31,8 +31,8 @@
     "@nestjs/schedule": "^6.0.1",
     "@repo/common": "*",
     "@repo/grpc": "*",
-    "@repo/pulsar": "*",
     "@repo/prisma": "*",
+    "@repo/pulsar": "*",
     "date-fns": "^4.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"

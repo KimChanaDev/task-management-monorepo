@@ -13,7 +13,8 @@ import {
   TaskEventTopic,
   TaskUpdatedEvent,
 } from '@repo/pulsar/types';
-import { EventType } from '../enums/event.type';
+import { EventType } from '../types/event-type.enum';
+import { TaskStatus } from '../types/task-status.enum';
 
 @Injectable()
 export class EventConsumerService implements OnModuleInit, OnModuleDestroy {
@@ -57,14 +58,6 @@ export class EventConsumerService implements OnModuleInit, OnModuleDestroy {
       this.logger.error('Failed to subscribe to task events', error);
       throw error;
     }
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    // const completedConsumer = await this.pulsarService.createConsumer({
-    //   topic: 'task-completed',
-    //   subscription: 'analytics-service-completed',
-    //   subscriptionType: 'Shared',
-    // });
-    // this.consumers.push(completedConsumer);
-    // this.consumeTaskCompleted(completedConsumer);
   }
 
   private async handleTaskCreated(message: Message) {
@@ -102,6 +95,19 @@ export class EventConsumerService implements OnModuleInit, OnModuleDestroy {
           assignedTo: data.changes.after.assignedTo,
           metadata: data.changes.after,
         });
+        if (data.changes.after.status === TaskStatus.DONE.toString()) {
+          await this.metricsService.recordTaskEvent({
+            taskId: data.taskId,
+            userId: data.userId,
+            eventType: EventType.COMPLETED,
+            status: data.changes.after.status,
+            priority: data.changes.after.priority,
+            assignedTo: data.changes.after.assignedTo,
+            metadata: {
+              completedAt: data.timestamp,
+            },
+          });
+        }
       }
 
       // Record assignments
@@ -122,7 +128,7 @@ export class EventConsumerService implements OnModuleInit, OnModuleDestroy {
       await this.metricsService.recordTaskEvent({
         taskId: data.taskId,
         userId: data.userId,
-        eventType: 'UPDATED',
+        eventType: EventType.UPDATED,
         status: data.changes.after.status,
         priority: data.changes.after.priority,
         assignedTo: data.changes.after.assignedTo,
@@ -133,34 +139,6 @@ export class EventConsumerService implements OnModuleInit, OnModuleDestroy {
       throw error;
     }
   }
-
-  // private async consumeTaskCompleted(consumer: Consumer) {
-  //   while (true) {
-  //     try {
-  //       const message: Message = await consumer.receive();
-  //       const data: TaskCompletedEvent = JSON.parse(
-  //         message.getData().toString(),
-  //       );
-
-  //       console.log(`📊 Processing task-completed event: ${data.taskId}`);
-
-  //       await this.metricsService.recordTaskEvent({
-  //         taskId: data.taskId,
-  //         userId: data.userId,
-  //         eventType: 'COMPLETED',
-  //         status: 'COMPLETED',
-  //         metadata: {
-  //           completionTime: data.completionTime,
-  //           completedAt: data.completedAt,
-  //         },
-  //       });
-
-  //       await consumer.acknowledge(message);
-  //     } catch (error) {
-  //       console.error('Error processing task-completed event:', error);
-  //     }
-  //   }
-  // }
 
   private async handleTaskDeleted(message: Message) {
     try {

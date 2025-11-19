@@ -5,12 +5,9 @@ package analytics;
 service AnalyticsService {
   rpc GetUserProductivity(GetUserProductivityRequest) returns (UserProductivityResponse);
   rpc GetTaskMetrics(GetTaskMetricsRequest) returns (TaskMetricsResponse);
-  rpc GetTeamAnalytics(GetTeamAnalyticsRequest) returns (TeamAnalyticsResponse);
-  rpc GetTrendAnalysis(GetTrendAnalysisRequest) returns (TrendAnalysisResponse);
   rpc GetPriorityDistribution(GetPriorityDistributionRequest) returns (PriorityDistributionResponse);
   rpc GetStatusDistribution(GetStatusDistributionRequest) returns (StatusDistributionResponse);
   rpc GetUserActivityHeatmap(GetUserActivityHeatmapRequest) returns (UserActivityHeatmapResponse);
-  rpc GetProductivityComparison(GetProductivityComparisonRequest) returns (ProductivityComparisonResponse);
 }
 
 // User Productivity
@@ -74,56 +71,6 @@ message TaskMetricsSummary {
   int32 totalCompleted = 2;
   double overallCompletionRate = 3;
   double averageCompletionTime = 4;
-}
-
-// Team Analytics
-message GetTeamAnalyticsRequest {
-  string teamId = 1;
-  string startDate = 2;
-  string endDate = 3;
-  string granularity = 4; // DAY, WEEK, MONTH
-}
-
-message TeamAnalyticsData {
-  string date = 1;
-  int32 activeUsers = 2;
-  int32 totalTasksCreated = 3;
-  int32 totalTasksCompleted = 4;
-  double teamProductivityScore = 5;
-  double collaborationScore = 6;
-}
-
-message TeamAnalyticsResponse {
-  repeated TeamAnalyticsData data = 1;
-  TeamAnalyticsSummary summary = 2;
-}
-
-message TeamAnalyticsSummary {
-  int32 totalActiveUsers = 1;
-  int32 totalTasks = 2;
-  int32 totalCompleted = 3;
-  double averageProductivityScore = 4;
-  double averageCollaborationScore = 5;
-}
-
-// Trend Analysis
-message GetTrendAnalysisRequest {
-  string userId = 1;
-  string metric = 2; // PRODUCTIVITY, COMPLETION_RATE, COMPLETION_TIME
-  string startDate = 3;
-  string endDate = 4;
-}
-
-message TrendDataPoint {
-  string date = 1;
-  double value = 2;
-}
-
-message TrendAnalysisResponse {
-  repeated TrendDataPoint data = 1;
-  string trend = 2; // INCREASING, DECREASING, STABLE
-  double changePercentage = 3;
-  double average = 4;
 }
 
 // Priority Distribution
@@ -197,26 +144,4 @@ message UserActivityHeatmapResponse {
   repeated HeatmapDataPoint data = 1;
   int32 totalActivities = 2;
   int32 peakHour = 3;
-  int32 peakDay = 4;
-}
-
-// Productivity Comparison
-message GetProductivityComparisonRequest {
-  repeated string userIds = 1;
-  string startDate = 2;
-  string endDate = 3;
-}
-
-message UserProductivityComparison {
-  string userId = 1;
-  int32 tasksCompleted = 2;
-  double productivityScore = 3;
-  double completionRate = 4;
-  double averageCompletionTime = 5;
-}
-
-message ProductivityComparisonResponse {
-  repeated UserProductivityComparison users = 1;
-  string topPerformer = 2;
-  double averageProductivityScore = 3;
 }

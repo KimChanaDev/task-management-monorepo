@@ -4,12 +4,9 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import {
   UserProductivityResponse,
   TaskMetricsResponse,
-  TeamAnalyticsResponse,
-  TrendAnalysisResponse,
   PriorityDistributionResponse,
   StatusDistributionResponse,
   UserActivityHeatmapResponse,
-  ProductivityComparisonResponse,
 } from './dto/analytics.dto';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { AnalyticsService } from './analytics.service';
@@ -50,37 +47,6 @@ export class AnalyticsResolver {
     });
   }
 
-  @Query(() => TeamAnalyticsResponse)
-  async getTeamAnalytics(
-    @Args('teamId', { nullable: true, defaultValue: 'default' }) teamId: string,
-    @Args('startDate') startDate: string,
-    @Args('endDate') endDate: string,
-    @Args('granularity', { nullable: true, defaultValue: 'DAY' })
-    granularity?: string,
-  ) {
-    return await this.analyticsService.getTeamAnalytics({
-      teamId: teamId || 'default',
-      startDate,
-      endDate,
-      granularity: granularity || 'DAY',
-    });
-  }
-
-  @Query(() => TrendAnalysisResponse)
-  async getTrendAnalysis(
-    @CurrentUser() user: any,
-    @Args('metric') metric: string,
-    @Args('startDate') startDate: string,
-    @Args('endDate') endDate: string,
-  ) {
-    return await this.analyticsService.getTrendAnalysis({
-      userId: user.sub,
-      metric,
-      startDate,
-      endDate,
-    });
-  }
-
   @Query(() => PriorityDistributionResponse)
   async getPriorityDistribution(
     @Args('startDate') startDate: string,
@@ -111,19 +77,6 @@ export class AnalyticsResolver {
   ) {
     return await this.analyticsService.getUserActivityHeatmap({
       userId: user.sub,
-      startDate,
-      endDate,
-    });
-  }
-
-  @Query(() => ProductivityComparisonResponse)
-  async getProductivityComparison(
-    @Args('userIds', { type: () => [String] }) userIds: string[],
-    @Args('startDate') startDate: string,
-    @Args('endDate') endDate: string,
-  ) {
-    return await this.analyticsService.getProductivityComparison({
-      userIds,
       startDate,
       endDate,
     });
