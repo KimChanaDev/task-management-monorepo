@@ -35,6 +35,11 @@
 		onclick={() => {
 			sidebarOpen = false;
 		}}
+		onkeydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				sidebarOpen = false;
+			}
+		}}
 		role="button"
 		tabindex="-1"
 		aria-label="Close sidebar"
@@ -134,9 +139,8 @@
 				<span class="truncate">Create Task</span>
 			</a>
 
-			<!-- href={resolve('/dashboard/analytics')} -->
 			<a
-				href="#"
+				href={resolve('/dashboard/analytics')}
 				onclick={() => (sidebarOpen = false)}
 				class="flex items-center px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
 			>
