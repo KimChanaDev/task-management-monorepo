@@ -1,11 +1,11 @@
 // src/hooks.server.ts
 import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { PUBLIC_GRAPHQL_GATWAY_URL } from '$env/static/public';
 import { USER_QUERIES, AUTH_QUERIES } from '$lib/graphql';
 import { ensureDataExisted, setAuthCookies, clearAuthCookies, findAuthCookies } from '$utils';
+import { GRAPHQL_GATWAY_URL } from '$env/static/private';
 
-const AUTH_ROUTES = ['/auth/login', '/auth/register'];
+const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register'];
 
 const session: Handle = async ({ event, resolve }) => {
 	const accessToken = event.cookies.get('AccessToken');
@@ -38,7 +38,7 @@ const session: Handle = async ({ event, resolve }) => {
 			}
 		}
 	} catch (error: any) {
-		console.error('Authentication error:', error.message);
+		console.error('Authentication error:', error);
 		clearAuthCookies(event);
 	}
 
@@ -48,10 +48,10 @@ const session: Handle = async ({ event, resolve }) => {
 const authGuard: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 	const isProtectedRoute = pathname.startsWith('/dashboard');
-	const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+	const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname === route);
 
 	// Redirect authenticated users away from auth pages
-	if (isAuthRoute && event.locals.user) {
+	if (isPublicRoute && event.locals.user) {
 		throw redirect(303, '/dashboard');
 	}
 
@@ -66,7 +66,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
 export const handle: Handle = sequence(session, authGuard);
 
 async function fetchUser(accessToken: string): Promise<App.Locals> {
-	const response = await fetch(`${PUBLIC_GRAPHQL_GATWAY_URL}/graphql`, {
+	const response = await fetch(`${GRAPHQL_GATWAY_URL}/graphql`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ async function fetchUser(accessToken: string): Promise<App.Locals> {
 }
 
 async function fetchAccessToken(refreshToken: string, event: any): Promise<string | null> {
-	const refreshResponse = await fetch(`${PUBLIC_GRAPHQL_GATWAY_URL}/graphql`, {
+	const refreshResponse = await fetch(`${GRAPHQL_GATWAY_URL}/graphql`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 import { authExchange as createAuthExchange } from '@urql/exchange-auth';
 import type { Operation, CombinedError } from '@urql/core';
-import { LOGIN_OPERATION, REFRESH_ACCESS_TOKEN_OPERATION } from '$lib/graphql';
+import { LOGIN_OPERATION, REFRESH_ACCESS_TOKEN_OPERATION, REGISTER_OPERATION } from '$lib/graphql';
+import { redirect } from '@sveltejs/kit';
 
 /**
  * Auth Exchange for urql using official @urql/exchange-auth
@@ -16,8 +17,30 @@ export const authExchange = createAuthExchange(async () => {
 		},
 
 		// Check if operation has auth error
-		didAuthError: (error: CombinedError) => {
-			return error.graphQLErrors.some((err: any) => err.extensions?.statusCode === 401);
+		didAuthError: (error: CombinedError, operation: Operation) => {
+			// Skip refresh for login, register, and refresh token operations
+			const isRefreshOperation = operation.query.loc?.source.body.includes(
+				REFRESH_ACCESS_TOKEN_OPERATION
+			);
+			const isLoginOperation = operation.query.loc?.source.body.includes(LOGIN_OPERATION);
+			const isRegisterOperation = operation.query.loc?.source.body.includes(REGISTER_OPERATION);
+
+			// Don't trigger refresh for these operations
+			if (isRefreshOperation || isLoginOperation || isRegisterOperation) {
+				console.log('[Auth Exchange] Skipping refresh for auth operation');
+				return false;
+			}
+
+			// Check if error is 401 (unauthorized)
+			const hasAuthError = error.graphQLErrors.some(
+				(err: any) => err.extensions?.statusCode === 401
+			);
+
+			if (hasAuthError) {
+				console.log('[Auth Exchange] Detected 401 error, will refresh token');
+			}
+
+			return hasAuthError;
 		},
 
 		// Refresh auth when needed
@@ -45,24 +68,15 @@ export const authExchange = createAuthExchange(async () => {
 				throw new Error('Refresh token response was not successful');
 			} catch (error) {
 				console.error('[Auth Exchange] Error refreshing token:', error);
-
-				// Redirect to login on refresh failure
-				if (typeof window !== 'undefined') {
-					window.location.href = '/auth/login';
-				}
+				throw redirect(303, '/auth/login');
 			}
 		},
 
-		// Check if operation should trigger auth
-		willAuthError: (operation: Operation) => {
-			// Skip auth check for refresh token mutation itself
-			const isRefreshOperation = operation.query.loc?.source.body.includes(
-				REFRESH_ACCESS_TOKEN_OPERATION
-			);
-
-			const isLoginOperation = operation.query.loc?.source.body.includes(LOGIN_OPERATION);
-
-			return !isRefreshOperation && !isLoginOperation;
+		// Check if operation should trigger auth (called before sending request)
+		willAuthError: () => {
+			// Always return false to let the request go through first
+			// Then check errors with didAuthError after getting response
+			return false;
 		}
 	};
 });

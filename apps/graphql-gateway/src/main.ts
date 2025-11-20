@@ -22,7 +22,20 @@ async function bootstrap() {
   app.use(cookieParser());
   app.useGlobalFilters(new GraphQLExceptionFilter());
   app.enableCors({
-    origin: [clientUrl ?? '*'],
+    origin: (origin, callback) => {
+      // Allow all origins when CLIENT_URL is not set
+      if (!clientUrl) {
+        callback(null, true);
+        return;
+      }
+      // Allow specific origins when CLIENT_URL is set
+      const allowedOrigins = [clientUrl];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST'],
     // allowedHeaders: ['Content-Type', 'Accept'],

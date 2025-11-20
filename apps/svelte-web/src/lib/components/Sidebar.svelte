@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { getContextClient } from '@urql/svelte';
 	import { resolve } from '$app/paths';
 	import { createAuthAPI } from '$lib/api';
@@ -24,7 +24,7 @@
 			console.error('Logout error:', error);
 		}
 		await invalidateAll(); // Invalidate all data to trigger re-fetch
-		window.location.href = '/auth/login';
+		goto(resolve('/auth/login'));
 	}
 </script>
 

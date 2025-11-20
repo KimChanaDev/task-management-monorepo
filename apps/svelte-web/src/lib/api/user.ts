@@ -13,7 +13,7 @@ export class UserAPI {
 	async getMe(): Promise<IUser | undefined> {
 		const result = await this.client.query(USER_QUERIES.GET_ME, {});
 		if (result.error) {
-			throw new Error(result.error.graphQLErrors[0].message ?? result.error.message);
+			throw new Error(result.error.graphQLErrors[0]?.message ?? result.error.message);
 		}
 		return result.data?.me as IUser | undefined;
 	}

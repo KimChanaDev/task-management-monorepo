@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { getContextClient } from '@urql/svelte';
 	import { resolve } from '$app/paths';
 	import { createAuthAPI, type IAuthResponse } from '$lib/api';
@@ -24,7 +24,6 @@
 			});
 
 			if (response) {
-				await invalidateAll();
 				goto(resolve('/dashboard'));
 			}
 		} catch (err: any) {

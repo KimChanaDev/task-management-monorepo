@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { PUBLIC_GRAPHQL_GATWAY_URL } from '$env/static/public';
 import { AUTH_QUERIES } from '$lib/graphql';
-import { setAuthCookies, findAuthCookies } from '$utils';
+import { setAuthCookies, findAuthCookies, clearAuthCookies } from '$utils';
+import { GRAPHQL_GATWAY_URL } from '$env/static/private';
 
 /**
  * API endpoint for refreshing access token
@@ -14,7 +14,7 @@ export const POST: RequestHandler = async ({ cookies, fetch }) => {
 		return json({ success: false, error: 'No refresh token' }, { status: 401 });
 	}
 	try {
-		const response = await fetch(`${PUBLIC_GRAPHQL_GATWAY_URL}/graphql`, {
+		const response = await fetch(`${GRAPHQL_GATWAY_URL}/graphql`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -41,8 +41,7 @@ export const POST: RequestHandler = async ({ cookies, fetch }) => {
 		return json({ success: true, message: 'Token refreshed successfully' });
 	} catch (error) {
 		console.error('Token refresh error:', error);
-		cookies.delete('AccessToken', { path: '/' });
-		cookies.delete('RefreshToken', { path: '/' });
+		clearAuthCookies({ cookies });
 		return json(
 			{
 				success: false,

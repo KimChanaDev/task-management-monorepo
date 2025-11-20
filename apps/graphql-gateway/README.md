@@ -335,6 +335,151 @@ mutation AssignTask {
 - `ADMIN`
 - `MANAGER`
 
+### Analytics Operations
+
+**Note:** All analytics operations require authentication.
+
+#### 1. Get User Productivity
+
+Get productivity metrics for the current user:
+
+```graphql
+query GetUserProductivity {
+  getUserProductivity(
+    startDate: "2025-01-01T00:00:00Z"
+    endDate: "2025-12-31T23:59:59Z"
+    granularity: "DAY" # optional, default: DAY (options: DAY, WEEK, MONTH)
+  ) {
+    data {
+      date
+      tasksCreated
+      tasksCompleted
+      tasksInProgress
+      tasksOverdue
+      averageCompletionTime
+      productivityScore
+    }
+    summary {
+      totalTasksCreated
+      totalTasksCompleted
+      averageProductivityScore
+      completionRate
+      averageCompletionTime
+    }
+  }
+}
+```
+
+#### 2. Get Task Metrics
+
+Get overall task metrics across the system:
+
+```graphql
+query GetTaskMetrics {
+  getTaskMetrics(
+    startDate: "2025-01-01T00:00:00Z"
+    endDate: "2025-12-31T23:59:59Z"
+    granularity: "WEEK" # optional, default: DAY
+  ) {
+    data {
+      date
+      totalTasks
+      tasksCreated
+      tasksCompleted
+      tasksInProgress
+      tasksInReview
+      tasksCancelled
+      tasksOverdue
+      completionRate
+      averageCompletionTime
+    }
+    summary {
+      totalTasks
+      totalCompleted
+      overallCompletionRate
+      averageCompletionTime
+    }
+  }
+}
+```
+
+#### 3. Get Priority Distribution
+
+Get distribution of tasks by priority:
+
+```graphql
+query GetPriorityDistribution {
+  getPriorityDistribution(
+    startDate: "2025-01-01T00:00:00Z"
+    endDate: "2025-12-31T23:59:59Z"
+  ) {
+    data {
+      date
+      low
+      medium
+      high
+      urgent
+    }
+    summary {
+      totalLow
+      totalMedium
+      totalHigh
+      totalUrgent
+    }
+  }
+}
+```
+
+#### 4. Get Status Distribution
+
+Get distribution of tasks by status:
+
+```graphql
+query GetStatusDistribution {
+  getStatusDistribution(
+    startDate: "2025-01-01T00:00:00Z"
+    endDate: "2025-12-31T23:59:59Z"
+  ) {
+    data {
+      date
+      todo
+      inProgress
+      review
+      completed
+      cancelled
+    }
+    summary {
+      totalTodo
+      totalInProgress
+      totalReview
+      totalCompleted
+      totalCancelled
+    }
+  }
+}
+```
+
+#### 5. Get User Activity Heatmap
+
+Get activity heatmap for the current user:
+
+```graphql
+query GetUserActivityHeatmap {
+  getUserActivityHeatmap(
+    startDate: "2025-01-01T00:00:00Z"
+    endDate: "2025-12-31T23:59:59Z"
+  ) {
+    data {
+      date
+      hour
+      activityCount
+    }
+    totalActivities
+    peakHour
+  }
+}
+```
+
 ## Scripts
 
 - `npm run dev` - Start development server with watch mode
@@ -348,3 +493,4 @@ mutation AssignTask {
 
 - Auth service
 - Task service
+- Analytics service

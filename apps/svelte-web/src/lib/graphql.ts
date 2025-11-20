@@ -1,6 +1,7 @@
 // GraphQL queries and mutations
 export const REFRESH_ACCESS_TOKEN_OPERATION = 'refreshAccessToken';
 export const LOGIN_OPERATION = 'login';
+export const REGISTER_OPERATION = 'register';
 
 export const AUTH_QUERIES = {
 	LOGIN: `
@@ -14,7 +15,7 @@ export const AUTH_QUERIES = {
 	`,
 	REGISTER: `
 		mutation Register($input: RegisterInput!) {
-			register(input: $input) {
+			${REGISTER_OPERATION}(input: $input) {
 				id
 				email
 				username

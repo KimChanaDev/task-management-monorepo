@@ -28,7 +28,7 @@ export class AuthAPI {
 	async login(input: ILoginInput): Promise<IAuthResponse> {
 		const result = await this.client.mutation(AUTH_QUERIES.LOGIN, { input });
 		if (result.error) {
-			throw new Error(result.error.graphQLErrors[0].message ?? result.error.message);
+			throw new Error(result.error.graphQLErrors[0]?.message ?? result.error.message);
 		}
 		return result.data?.login as IAuthResponse;
 	}
@@ -36,7 +36,7 @@ export class AuthAPI {
 	async register(input: IRegisterInput): Promise<IAuthResponse> {
 		const result = await this.client.mutation(AUTH_QUERIES.REGISTER, { input });
 		if (result.error) {
-			throw new Error(result.error.graphQLErrors[0].message ?? result.error.message);
+			throw new Error(result.error.graphQLErrors[0]?.message ?? result.error.message);
 		}
 		return result.data?.register as IAuthResponse;
 	}
@@ -44,7 +44,7 @@ export class AuthAPI {
 	async logout(): Promise<ILogoutResponse> {
 		const result = await this.client.mutation(AUTH_QUERIES.LOGOUT, {});
 		if (result.error) {
-			throw new Error(result.error.graphQLErrors[0].message ?? result.error.message);
+			throw new Error(result.error.graphQLErrors[0]?.message ?? result.error.message);
 		}
 		return result.data?.logout as ILogoutResponse;
 	}
@@ -52,7 +52,7 @@ export class AuthAPI {
 	async refreshAccessToken(): Promise<ILogoutResponse> {
 		const result = await this.client.mutation(AUTH_QUERIES.REFRESH_TOKEN, {});
 		if (result.error) {
-			throw new Error(result.error.graphQLErrors[0].message ?? result.error.message);
+			throw new Error(result.error.graphQLErrors[0]?.message ?? result.error.message);
 		}
 		return result.data?.refreshAccessToken as ILogoutResponse;
 	}
