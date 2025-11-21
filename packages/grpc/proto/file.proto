@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package file;
+
+service FileService {
+  rpc UploadFile(UploadFileRequest) returns (UploadFileResponse);
+  rpc GetFile(GetFileRequest) returns (GetFileResponse);
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+  rpc GetFilesByTask(GetFilesByTaskRequest) returns (ListFilesResponse);
+  rpc GetFilesByUser(GetFilesByUserRequest) returns (ListFilesResponse);
+}
+
+message UploadFileRequest {
+  bytes content = 1;
+  string filename = 2;
+  string mimeType = 3;
+  string uploadedBy = 4;
+  optional string taskId = 5;
+  optional string description = 6;
+}
+
+message UploadFileResponse {
+  string id = 1;
+  string filename = 2;
+  string url = 3;
+  optional string thumbnailUrl = 4;
+  int64 size = 5;
+  string message = 6;
+}
+
+message GetFileRequest {
+  string id = 1;
+}
+
+message GetFileResponse {
+  string id = 1;
+  string filename = 2;
+  string originalName = 3;
+  string mimeType = 4;
+  int64 size = 5;
+  string url = 6;
+  optional string thumbnailUrl = 7;
+  string uploadedBy = 8;
+  optional string taskId = 9;
+  optional string description = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
+}
+
+message DeleteFileRequest {
+  string id = 1;
+  string userId = 2;
+}
+
+message DeleteFileResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListFilesRequest {
+  int32 page = 1;
+  int32 limit = 2;
+}
+
+message GetFilesByTaskRequest {
+  string taskId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetFilesByUserRequest {
+  string userId = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message ListFilesResponse {
+  repeated FileInfo files = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message FileInfo {
+  string id = 1;
+  string filename = 2;
+  string originalName = 3;
+  string mimeType = 4;
+  int64 size = 5;
+  string url = 6;
+  optional string thumbnailUrl = 7;
+  string uploadedBy = 8;
+  optional string taskId = 9;
+  optional string description = 10;
+  string createdAt = 11;
+  string updatedAt = 12;
+}

@@ -1,0 +1,32 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../../node_modules/@prisma/client/file-service"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model File {
+    id            String   @id @default(uuid())
+    filename      String
+    originalName  String
+    mimeType      String
+    size          Int
+    url           String
+    thumbnailUrl  String?
+    bucket        String
+    path          String
+    thumbnailPath String?
+    uploadedBy    String
+    taskId        String?
+    description   String?
+    createdAt     DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt     DateTime @updatedAt @db.Timestamptz(6)
+
+    @@index([uploadedBy])
+    @@index([taskId])
+    @@index([createdAt])
+    @@map("files")
+}

@@ -27,6 +27,10 @@
       "types": "./shared-types/analytics.ts",
       "default": "./dist/shared-types/analytics.js"
     },
+    "./file": {
+      "types": "./shared-types/file.ts",
+      "default": "./dist/shared-types/file.js"
+    },
     "./exception": {
       "types": "./src/rpc.exceptions.ts",
       "default": "./dist/src/rpc.exceptions.js"

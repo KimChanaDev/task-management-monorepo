@@ -3,10 +3,11 @@ import { AppModule } from './app.module';
 import { GrpcOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ProtoPackage } from '@repo/grpc/package';
 
 async function bootstrap() {
+  const logger = new Logger('AnalyticsService');
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const httpPort: number = app.get(ConfigService).getOrThrow('HTTP_PORT');
   const grpcPort: number = app.get(ConfigService).getOrThrow('GRPC_PORT');
@@ -32,8 +33,8 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
   await app.listen(httpPort);
-  console.log(`🚀 Analytics http service is running on port ${httpPort}`);
-  console.log(`🚀 Analytics grpc service is running on port ${grpcPort}`);
+  logger.log(`🚀 Analytics http service is running on port ${httpPort}`);
+  logger.log(`🚀 Analytics grpc service is running on port ${grpcPort}`);
 }
 
 void bootstrap();

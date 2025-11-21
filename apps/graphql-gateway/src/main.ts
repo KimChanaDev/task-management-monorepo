@@ -1,11 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GraphQLExceptionFilter } from './auth/filters/graphql-exception.filter';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
+  const logger = new Logger('GraphQLGateway');
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const httpPort: number = app.get(ConfigService).getOrThrow('HTTP_PORT');
   const clientUrl: string | undefined = app
@@ -43,7 +44,7 @@ async function bootstrap() {
 
   await app.listen(httpPort);
 
-  console.log(
+  logger.log(
     `🚀 GraphQL Gateway is running on http://localhost:${httpPort}/graphql`,
   );
 }
