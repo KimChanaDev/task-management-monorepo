@@ -6,6 +6,8 @@
 	import BarChart from '$lib/components/analytics/BarChart.svelte';
 	import DoughnutChart from '$lib/components/analytics/DoughnutChart.svelte';
 	import ActivityHeatmap from '$lib/components/analytics/ActivityHeatmap.svelte';
+	import ExportButton from '$lib/components/analytics/ExportButton.svelte';
+	import type { ExportData } from '$lib/utils/export';
 	import {
 		GET_USER_PRODUCTIVITY,
 		GET_TASK_METRICS,
@@ -67,16 +69,78 @@
 			$statusDistStore.error ||
 			$heatmapStore.error
 	);
+
+	// Prepare export data
+	const exportData = $derived.by((): ExportData => {
+		const data: ExportData = {};
+
+		if ($userProductivityStore.data?.getUserProductivity) {
+			const summary = $userProductivityStore.data.getUserProductivity.summary;
+			data.summary = {
+				productivityScore: summary.averageProductivityScore,
+				tasksCompleted: summary.totalTasksCompleted,
+				tasksCreated: summary.totalTasksCreated,
+				completionRate: summary.completionRate
+			};
+
+			data.productivityTrends = $userProductivityStore.data.getUserProductivity.data.map(
+				(item: any) => ({
+					date: item.date,
+					productivityScore: item.productivityScore,
+					tasksCompleted: item.tasksCompleted
+				})
+			);
+		}
+
+		if ($taskMetricsStore.data?.getTaskMetrics) {
+			data.taskMetrics = $taskMetricsStore.data.getTaskMetrics.data.map((item: any) => ({
+				date: item.date,
+				completionRate: item.completionRate,
+				tasksCreated: item.tasksCreated,
+				tasksCompleted: item.tasksCompleted
+			}));
+		}
+
+		if ($priorityDistStore.data?.getPriorityDistribution) {
+			const summary = $priorityDistStore.data.getPriorityDistribution.summary;
+			data.priorityDistribution = {
+				low: summary.totalLow,
+				medium: summary.totalMedium,
+				high: summary.totalHigh,
+				urgent: summary.totalUrgent
+			};
+		}
+
+		if ($statusDistStore.data?.getStatusDistribution) {
+			const summary = $statusDistStore.data.getStatusDistribution.summary;
+			data.statusDistribution = {
+				todo: summary.totalTodo,
+				inProgress: summary.totalInProgress,
+				review: summary.totalReview,
+				completed: summary.totalCompleted,
+				cancelled: summary.totalCancelled
+			};
+		}
+
+		return data;
+	});
 </script>
 
 <div class="min-h-screen bg-gray-50 py-8">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<!-- Header -->
 		<div class="mb-8">
-			<h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-			<p class="mt-2 text-sm text-gray-600">
-				Performance insights and productivity metrics for the last 30 days (Update hourly).
-			</p>
+			<div class="flex items-center justify-between">
+				<div>
+					<h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+					<p class="mt-2 text-sm text-gray-600">
+						Performance insights and productivity metrics for the last 30 days (Update hourly).
+					</p>
+				</div>
+				<div>
+					<ExportButton data={exportData} disabled={isLoading || !!hasError} />
+				</div>
+			</div>
 		</div>
 
 		{#if isLoading}

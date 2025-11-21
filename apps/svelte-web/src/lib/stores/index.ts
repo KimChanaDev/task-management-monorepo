@@ -4,5 +4,6 @@ export {
 	notificationStore,
 	recentNotifications,
 	unreadCount,
-	allNotifications
+	allNotifications,
+	createCustomNotification
 } from './notification-store';

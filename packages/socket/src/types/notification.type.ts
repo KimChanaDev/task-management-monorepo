@@ -3,6 +3,7 @@ export enum NotificationType {
   TASK_UPDATED = "task.updated",
   TASK_DELETED = "task.deleted",
   TASK_ASSIGNED = "task.assigned",
+  CUSTOM = "custom.notification",
 }
 
 export interface BaseNotification {
@@ -51,8 +52,14 @@ export interface TaskAssignedNotification extends BaseNotification {
   };
 }
 
+export interface TaskCustomNotification extends BaseNotification {
+  type: NotificationType.CUSTOM;
+  data: any;
+}
+
 export type Notification =
   | TaskCreatedNotification
   | TaskUpdatedNotification
   | TaskDeletedNotification
-  | TaskAssignedNotification;
+  | TaskAssignedNotification
+  | TaskCustomNotification;

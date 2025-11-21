@@ -21,6 +21,7 @@
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@tailwindcss/postcss": "^4.1.16",
 		"@types/node": "^22",
+		"@types/papaparse": "^5.5.0",
 		"autoprefixer": "^10.4.21",
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.4.0",
@@ -35,6 +36,9 @@
 		"chartjs-adapter-date-fns": "^3.0.0",
 		"date-fns": "^4.1.0",
 		"graphql": "^16.12.0",
+		"jspdf": "^3.0.4",
+		"jspdf-autotable": "^5.0.2",
+		"papaparse": "^5.5.3",
 		"socket.io-client": "^4.8.1",
 		"svelte": "^5.43.3",
 		"wonka": "^6.3.5"

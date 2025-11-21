@@ -1,5 +1,9 @@
 import { writable, derived } from 'svelte/store';
-import type { Notification } from '@repo/socket/types';
+import {
+	NotificationType,
+	type Notification,
+	type TaskCustomNotification
+} from '@repo/socket/types';
 
 interface NotificationState {
 	items: Notification[];
@@ -117,3 +121,19 @@ export const unreadCount = derived(notificationStore, (state) => state.unreadCou
 
 // Derived store for all notifications (for activity feed)
 export const allNotifications = derived(notificationStore, (state) => state.items);
+
+export const createCustomNotification = (
+	message: string,
+	userId: string = 'system',
+	data: any = {}
+): TaskCustomNotification => {
+	return {
+		id: crypto.randomUUID(),
+		type: NotificationType.CUSTOM,
+		timestamp: new Date(),
+		userId,
+		message,
+		read: false,
+		data
+	};
+};
