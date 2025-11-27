@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { AUTH_QUERIES } from '$lib/graphql';
+import { AUTH_QUERIES } from '$queries';
 import { setAuthCookies, findAuthCookies, clearAuthCookies } from '$utils';
 import { GRAPHQL_GATWAY_URL } from '$env/static/private';
 

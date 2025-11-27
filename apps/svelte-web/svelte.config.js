@@ -12,12 +12,15 @@ const config = {
 		// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter(),
+		// npm run build when add new alias
 		alias: {
 			$lib: 'src/lib',
 			$components: 'src/lib/components',
 			$utils: 'src/lib/utils',
 			$consts: 'src/lib/consts',
-			$stores: 'src/lib/stores'
+			$stores: 'src/lib/stores',
+			$interfaces: 'src/lib/interfaces',
+			$queries: 'src/lib/graphql',
 		}
 	}
 };

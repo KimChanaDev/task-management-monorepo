@@ -1,46 +1,8 @@
-// GraphQL queries and mutations
-export const REFRESH_ACCESS_TOKEN_OPERATION = 'refreshAccessToken';
-export const LOGIN_OPERATION = 'login';
-export const REGISTER_OPERATION = 'register';
-
-export const AUTH_QUERIES = {
-	LOGIN: `
-		mutation Login($input: LoginInput!) {
-			${LOGIN_OPERATION}(input: $input) {
-				id
-				email
-				username
-			}
-		}
-	`,
-	REGISTER: `
-		mutation Register($input: RegisterInput!) {
-			${REGISTER_OPERATION}(input: $input) {
-				id
-				email
-				username
-			}
-		}
-	`,
-	LOGOUT: `
-		mutation Logout {
-			logout {
-				message
-			}
-		}
-	`,
-	REFRESH_TOKEN: `
-		mutation RefreshAccessToken {
-			${REFRESH_ACCESS_TOKEN_OPERATION} {
-				message
-			}
-		}
-	`
-};
+import { gql } from '@urql/svelte';
 
 export const TASK_QUERIES = {
-	GET_TASK: `
-		query GetTask ($id: ID!) {
+	GET_TASK: gql`
+		query GetTask($id: ID!) {
 			task(id: $id) {
 				id
 				title
@@ -52,10 +14,19 @@ export const TASK_QUERIES = {
 				createdBy
 				createdAt
 				updatedAt
+				attachments {
+					id
+					filename
+					originalName
+					mimeType
+					size
+					url
+					thumbnailUrl
+				}
 			}
 		}
 	`,
-	GET_MY_TASKS: `
+	GET_MY_TASKS: gql`
 		query MyTasks($filter: MyTaskFilterInput!) {
 			myTasks(filter: $filter) {
 				tasks {
@@ -74,7 +45,7 @@ export const TASK_QUERIES = {
 			}
 		}
 	`,
-	GET_ALL_TASK: `
+	GET_ALL_TASK: gql`
 		query AllTasks($filter: TaskFilterInput!) {
 			tasks(filter: $filter) {
 				id
@@ -90,7 +61,7 @@ export const TASK_QUERIES = {
 			}
 		}
 	`,
-	CREATE_TASK: `
+	CREATE_TASK: gql`
 		mutation CreateTask($input: CreateTaskInput!) {
 			createTask(input: $input) {
 				id
@@ -106,7 +77,7 @@ export const TASK_QUERIES = {
 			}
 		}
 	`,
-	UPDATE_TASK: `
+	UPDATE_TASK: gql`
 		mutation UpdateTask($updateTaskInput: UpdateTaskInput!) {
 			updateTask(input: $updateTaskInput) {
 				id
@@ -122,12 +93,12 @@ export const TASK_QUERIES = {
 			}
 		}
 	`,
-	DELETE_TASK: `
+	DELETE_TASK: gql`
 		mutation DeleteTask($id: ID!) {
 			deleteTask(id: $id)
 		}
 	`,
-	ASSIGN_TASK: `
+	ASSIGN_TASK: gql`
 		mutation AssignTask($id: ID!, $assignedTo: string!) {
 			assignTask(id: $id, assignedTo: $assignedTo) {
 				id
@@ -143,7 +114,7 @@ export const TASK_QUERIES = {
 			}
 		}
 	`,
-	DASHBOARD_QUERY: `
+	DASHBOARD_QUERY: gql`
 		query GetDashboardData($limit: Int!) {
 			dashboard(limit: $limit) {
 				recentTasks {
@@ -164,18 +135,6 @@ export const TASK_QUERIES = {
 				reviewCount
 				completedCount
 				cancelledCount
-			}
-		}
-	`
-};
-
-export const USER_QUERIES = {
-	GET_ME: `
-		query GetMe {
-			me {
-				id
-				email
-				username
 			}
 		}
 	`

@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import { getContextClient } from '@urql/svelte';
 	import { createTaskAPI } from '$lib/api';
-	import { formatDate } from '$utils';
+	import { formatDate, formatFileSize } from '$utils';
 	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
 
@@ -21,6 +21,7 @@
 	let taskId: string = $derived(data.taskId);
 	let loading = $state(true);
 	let deleteLoading = $state(false);
+	let selectedImage = $state<{ url: string; filename: string } | null>(null);
 
 	onMount(async () => {
 		await fetchTask();
@@ -69,7 +70,23 @@
 			deleteLoading = false;
 		}
 	}
+
+	function openImageModal(url: string, filename: string) {
+		selectedImage = { url, filename };
+	}
+
+	function closeImageModal() {
+		selectedImage = null;
+	}
+
+	function handleKeyDown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && selectedImage) {
+			closeImageModal();
+		}
+	}
 </script>
+
+<svelte:window onkeydown={handleKeyDown} />
 
 <div class="max-w-5xl mx-auto p-3 sm:p-4 md:p-6">
 	<!-- Header with back button -->
@@ -305,7 +322,109 @@
 						</p>
 					</div>
 				</div>
+
+				<!-- Attachments Section -->
+				{#if $taskStore.individualPage.task.attachments && $taskStore.individualPage.task.attachments.length > 0}
+					<div class="border-t border-gray-200 pt-4 sm:pt-6 mt-4 sm:mt-6">
+						<h2
+							class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2"
+						>
+							<svg
+								class="w-5 h-5 text-gray-400"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+								/>
+							</svg>
+							Attachments ({$taskStore.individualPage.task.attachments.length})
+						</h2>
+						<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+							{#each $taskStore.individualPage.task.attachments as attachment (attachment.id)}
+								<button
+									type="button"
+									onclick={() =>
+										openImageModal(attachment.url, attachment.originalName ?? attachment.filename)}
+									class="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 hover:border-indigo-300 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+								>
+									<img
+										src={attachment.thumbnailUrl || attachment.url}
+										alt={attachment.originalName}
+										class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+									/>
+									<div
+										class="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center"
+									>
+										<svg
+											class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+											/>
+										</svg>
+									</div>
+									<div
+										class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2"
+									>
+										<p class="text-white text-xs truncate">{attachment.originalName}</p>
+										<p class="text-white/70 text-xs">{formatFileSize(attachment.size)}</p>
+									</div>
+								</button>
+							{/each}
+						</div>
+					</div>
+				{/if}
 			</div>
 		</div>
 	{/if}
 </div>
+
+<!-- Image Modal -->
+{#if selectedImage}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+		role="dialog"
+		aria-modal="true"
+	>
+		<button
+			type="button"
+			aria-label="Close image preview"
+			onclick={closeImageModal}
+			class="absolute top-4 right-4 p-2 text-white hover:text-gray-300 transition-colors z-10"
+		>
+			<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M6 18L18 6M6 6l12 12"
+				/>
+			</svg>
+		</button>
+		<button
+			type="button"
+			aria-label="Close modal"
+			onclick={closeImageModal}
+			class="absolute inset-0 w-full h-full"
+		></button>
+		<div class="relative max-w-4xl max-h-[90vh] mx-4">
+			<img
+				src={selectedImage.url}
+				alt={selectedImage.filename}
+				class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+			/>
+			<p class="text-center text-white mt-2 text-sm sm:text-base">{selectedImage.filename}</p>
+		</div>
+	</div>
+{/if}

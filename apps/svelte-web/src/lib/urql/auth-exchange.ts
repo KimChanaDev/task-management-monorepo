@@ -1,6 +1,6 @@
 import { authExchange as createAuthExchange } from '@urql/exchange-auth';
 import type { Operation, CombinedError } from '@urql/core';
-import { LOGIN_OPERATION, REFRESH_ACCESS_TOKEN_OPERATION, REGISTER_OPERATION } from '$lib/graphql';
+import { LOGIN_OPERATION, REFRESH_ACCESS_TOKEN_OPERATION, REGISTER_OPERATION } from '$queries';
 import { redirect } from '@sveltejs/kit';
 
 /**

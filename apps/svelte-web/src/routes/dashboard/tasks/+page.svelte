@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { getContextClient } from '@urql/svelte';
 	import { onMount } from 'svelte';
-	import { createTaskAPI, type IMyTaskFilterInput } from '$lib/api';
+	import { createTaskAPI } from '$lib/api';
+	import type { IMyTaskFilterInput } from '$interfaces';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
 	import { toTitleCaseFromEnum } from '$utils';
 	import { TaskBlock } from '$components';

@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { getContextClient } from '@urql/svelte';
-	import { createTaskAPI, type ICreateTaskInput } from '$lib/api';
+	import { createTaskAPI } from '$lib/api';
+	import type { ICreateTaskInput, IUploadFileInput } from '$interfaces';
 	import { TASK_PRIORITY, TASK_STATUS } from '$consts';
-	import { toTitleCaseFromEnum } from '$utils';
+	import { toTitleCaseFromEnum, fileToBase64 } from '$utils';
 	import { resolve } from '$app/paths';
+	import { ImageUpload } from '$lib/components';
+
 	const client = getContextClient();
 	const taskAPI = createTaskAPI(client);
 
@@ -16,6 +19,9 @@
 	let assignedTo = $state('');
 	let error = $state('');
 	let loading = $state(false);
+
+	let pendingFiles = $state<File[]>([]);
+	let uploadErrors = $state<string[]>([]);
 
 	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -33,6 +39,19 @@
 
 			if (dueDate) {
 				input.dueDate = new Date(dueDate).toISOString();
+			}
+
+			if (pendingFiles.length > 0) {
+				input.attachments = await Promise.all(
+					pendingFiles.map(async (file: File): Promise<IUploadFileInput> => {
+						const base64Content = await fileToBase64(file);
+						return {
+							filename: file.name,
+							mimeType: file.type,
+							content: base64Content
+						};
+					})
+				);
 			}
 
 			const task = await taskAPI.createTask(input);
@@ -168,6 +187,21 @@
 					class="w-full px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 					placeholder="User ID to assign task to"
 				/>
+			</div>
+
+			<!-- Image Upload Section -->
+			<div>
+				<span class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+					Attachments
+				</span>
+				{#if uploadErrors.length > 0}
+					<div
+						class="mb-3 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg text-sm"
+					>
+						{uploadErrors.join(', ')}
+					</div>
+				{/if}
+				<ImageUpload bind:pendingFiles bind:uploadErrors maxFiles={5} />
 			</div>
 
 			<div

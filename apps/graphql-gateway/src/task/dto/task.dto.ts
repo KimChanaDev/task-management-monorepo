@@ -1,6 +1,33 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 
 @ObjectType()
+export class TaskAttachmentDto {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  filename: string;
+
+  @Field()
+  originalName: string;
+
+  @Field()
+  mimeType: string;
+
+  @Field()
+  size: number;
+
+  @Field()
+  url: string;
+
+  @Field({ nullable: true })
+  thumbnailUrl?: string;
+
+  @Field()
+  createdAt: string;
+}
+
+@ObjectType()
 export class TaskDto {
   @Field(() => ID)
   id: string;
@@ -31,6 +58,9 @@ export class TaskDto {
 
   @Field()
   updatedAt: string;
+
+  @Field(() => [TaskAttachmentDto], { nullable: true })
+  attachments?: TaskAttachmentDto[];
 }
 
 @ObjectType()

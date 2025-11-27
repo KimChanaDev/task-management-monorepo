@@ -1,26 +1,6 @@
 import type { Client } from '@urql/svelte';
-import { AUTH_QUERIES } from '$lib/graphql';
-
-export interface ILoginInput {
-	email: string;
-	password: string;
-}
-
-export interface IRegisterInput {
-	email: string;
-	username: string;
-	password: string;
-}
-
-export interface IAuthResponse {
-	id: string;
-	email: string;
-	username: string;
-}
-
-export interface ILogoutResponse {
-	message: string;
-}
+import { AUTH_QUERIES } from '$queries';
+import type { ILoginInput, IRegisterInput, IAuthResponse, ILogoutResponse } from '$interfaces';
 
 export class AuthAPI {
 	constructor(private client: Client) {}

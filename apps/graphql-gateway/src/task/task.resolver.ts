@@ -16,10 +16,16 @@ import {
   TasksResponse,
 } from '@repo/grpc/task';
 import { type TokenPayload } from '@repo/grpc/auth';
+import { FileService } from '../file/file.service';
+import { ListFilesResponse } from '@repo/grpc/file';
+import { GrpcUtils } from '@repo/grpc/utils';
 
-@Resolver()
+@Resolver(() => TaskDto)
 export class TaskResolver {
-  constructor(private readonly taskService: TaskService) {}
+  constructor(
+    private readonly taskService: TaskService,
+    private readonly fileService: FileService,
+  ) {}
 
   @Mutation(() => TaskDto)
   @UseGuards(GqlAuthGuard)
@@ -31,6 +37,14 @@ export class TaskResolver {
       input,
       user.sub,
     );
+    if (input.attachments && input.attachments.length > 0) {
+      for (const file of input.attachments) {
+        await this.fileService.uploadFile(
+          { ...file, taskId: result.task?.id },
+          user.sub,
+        );
+      }
+    }
     return result.task as TaskDto;
   }
 
@@ -41,7 +55,25 @@ export class TaskResolver {
     @Args('id', { type: () => ID }) id: string,
   ): Promise<TaskDto | null> {
     const result: TaskResponse = await this.taskService.getTask(id, user.sub);
-    return result.task ? ({ ...result.task } as TaskDto) : null;
+    const files: ListFilesResponse = await this.fileService.getFilesByTask({
+      taskId: id,
+      page: 1,
+      limit: 5,
+    });
+    const response = result.task ? ({ ...result.task } as TaskDto) : null;
+    if (response && files.files && files.files.length > 0) {
+      response.attachments = files.files.map((file) => ({
+        id: file.id,
+        filename: file.filename,
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        size: GrpcUtils.toNumber(file.size),
+        url: file.url,
+        thumbnailUrl: file.thumbnailUrl,
+        createdAt: file.createdAt,
+      }));
+    }
+    return response;
   }
 
   @Query(() => [TaskDto])
@@ -76,6 +108,19 @@ export class TaskResolver {
     @Args('input') input: UpdateTaskInput,
   ): Promise<TaskDto> {
     const result = await this.taskService.updateTask(input, user.sub);
+    if (input.newAttachments && input.newAttachments.length > 0) {
+      for (const file of input.newAttachments) {
+        await this.fileService.uploadFile(
+          { ...file, taskId: result.task?.id },
+          user.sub,
+        );
+      }
+    }
+    if (input.removedAttachmentIds && input.removedAttachmentIds.length > 0) {
+      for (const fileId of input.removedAttachmentIds) {
+        await this.fileService.deleteFile(fileId, user.sub);
+      }
+    }
     return result.task as TaskDto;
   }
 

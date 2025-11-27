@@ -8,13 +8,7 @@
 	import ActivityHeatmap from '$lib/components/analytics/ActivityHeatmap.svelte';
 	import ExportButton from '$lib/components/analytics/ExportButton.svelte';
 	import type { ExportData } from '$lib/utils/export';
-	import {
-		GET_USER_PRODUCTIVITY,
-		GET_TASK_METRICS,
-		GET_PRIORITY_DISTRIBUTION,
-		GET_STATUS_DISTRIBUTION,
-		GET_USER_ACTIVITY_HEATMAP
-	} from '$lib/graphql/analytics.queries';
+	import { ANALYTICS_QUERIES } from '$queries';
 
 	const client = getContextClient();
 
@@ -25,31 +19,31 @@
 	// Query stores
 	const userProductivityStore = queryStore({
 		client,
-		query: GET_USER_PRODUCTIVITY,
+		query: ANALYTICS_QUERIES.USER_PRODUCTIVITY,
 		variables: { startDate, endDate, granularity: 'DAY' }
 	});
 
 	const taskMetricsStore = queryStore({
 		client,
-		query: GET_TASK_METRICS,
+		query: ANALYTICS_QUERIES.TASK_METRICS,
 		variables: { startDate, endDate, granularity: 'DAY' }
 	});
 
 	const priorityDistStore = queryStore({
 		client,
-		query: GET_PRIORITY_DISTRIBUTION,
+		query: ANALYTICS_QUERIES.PRIORITY_DISTRIBUTION,
 		variables: { startDate, endDate }
 	});
 
 	const statusDistStore = queryStore({
 		client,
-		query: GET_STATUS_DISTRIBUTION,
+		query: ANALYTICS_QUERIES.STATUS_DISTRIBUTION,
 		variables: { startDate, endDate }
 	});
 
 	const heatmapStore = queryStore({
 		client,
-		query: GET_USER_ACTIVITY_HEATMAP,
+		query: ANALYTICS_QUERIES.USER_ACTIVITY_HEATMAP,
 		variables: { startDate, endDate }
 	});
 

@@ -20,6 +20,8 @@ async function bootstrap() {
         '../../../node_modules/@repo/grpc/proto/file.proto',
       ),
       url: `0.0.0.0:${grpcPort}`,
+      maxReceiveMessageLength: 50 * 1024 * 1024, // 50MB
+      maxSendMessageLength: 50 * 1024 * 1024, // 50MB
     },
   });
   app.useGlobalPipes(

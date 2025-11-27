@@ -4,6 +4,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GraphQLExceptionFilter } from './auth/filters/graphql-exception.filter';
 import cookieParser from 'cookie-parser';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const logger = new Logger('GraphQLGateway');
@@ -12,6 +13,12 @@ async function bootstrap() {
   const clientUrl: string | undefined = app
     .get(ConfigService)
     .get('CLIENT_URL');
+
+  // Increase body size limit for file uploads (nestjs default limit is 100KB to 1MB)
+  // base64 encoded files are ~33% larger than the original file size
+  // 50MB limit to accommodate 10MB files after base64 encoding + JSON overhead
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb', extended: true }));
 
   app.useGlobalPipes(
     new ValidationPipe({

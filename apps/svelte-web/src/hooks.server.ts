@@ -1,7 +1,7 @@
 // src/hooks.server.ts
 import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { USER_QUERIES, AUTH_QUERIES } from '$lib/graphql';
+import { AUTH_QUERIES, USER_QUERIES } from '$queries';
 import { ensureDataExisted, setAuthCookies, clearAuthCookies, findAuthCookies } from '$utils';
 import { GRAPHQL_GATWAY_URL } from '$env/static/private';
 

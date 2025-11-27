@@ -2,6 +2,7 @@ import { InputType, Field, registerEnumType } from '@nestjs/graphql';
 import { IsString, IsOptional, IsEnum, IsNumber } from 'class-validator';
 import { TaskPriority } from '../../enums/task-priority.enum';
 import { TaskStatus } from '../../enums/task-status.enum';
+import { UploadFileInput } from '../../file/dto/file.input';
 
 registerEnumType(TaskPriority, {
   name: 'TaskPriority',
@@ -41,6 +42,10 @@ export class CreateTaskInput {
   @IsOptional()
   @IsString()
   assignedTo?: string;
+
+  @Field(() => [UploadFileInput], { nullable: true })
+  @IsOptional()
+  attachments?: UploadFileInput[];
 }
 
 @InputType()
@@ -78,6 +83,14 @@ export class UpdateTaskInput {
   @IsOptional()
   @IsString()
   assignedTo?: string;
+
+  @Field(() => [UploadFileInput], { nullable: true })
+  @IsOptional()
+  newAttachments?: UploadFileInput[];
+
+  @Field(() => [String], { nullable: true })
+  @IsOptional()
+  removedAttachmentIds?: string[];
 }
 
 @InputType()

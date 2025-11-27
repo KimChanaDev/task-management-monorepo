@@ -38,6 +38,10 @@
     "./package": {
       "types": "./src/proto-package.enum.ts",
       "default": "./dist/src/proto-package.enum.js"
+    },
+    "./utils": {
+      "types": "./src/utils.ts",
+      "default": "./dist/src/utils.js"
     }
   }
 }

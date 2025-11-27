@@ -1,4 +1,4 @@
-import type { ITaskResponse } from '$lib/api';
+import type { ITaskResponse } from '$interfaces';
 import { writable, get } from 'svelte/store';
 
 interface TaskState {

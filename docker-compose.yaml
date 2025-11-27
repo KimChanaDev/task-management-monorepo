@@ -77,6 +77,7 @@ services:
       AUTH_SERVICE_GRPC_URL: auth-service:5000
       TASK_SERVICE_GRPC_URL: task-service:5001
       ANALYTICS_SERVICE_GRPC_URL: analytics-service:5005
+      FILE_SERVICE_GRPC_URL: file-service:50046
       ACCESS_TOKEN_EXPIRES_IN: "15m"
       REFRESH_TOKEN_EXPIRES_IN: "7d"
       CLIENT_URL: http://localhost:4003
@@ -88,6 +89,8 @@ services:
       task-service:
         condition: service_started
       analytics-service:
+        condition: service_started
+      file-service:
         condition: service_started
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:4002/healthcheck" ]

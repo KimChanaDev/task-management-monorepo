@@ -2,7 +2,8 @@
 	import { getContextClient } from '@urql/svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { createAuthAPI, type IAuthResponse } from '$lib/api';
+	import { createAuthAPI } from '$lib/api';
+	import type { IAuthResponse } from '$interfaces';
 
 	const client = getContextClient();
 	const authAPI = createAuthAPI(client);
