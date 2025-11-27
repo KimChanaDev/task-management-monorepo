@@ -5,7 +5,7 @@
       "name": "Debug Auth App",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/apps/auth-service/node_modules/@nestjs/cli/bin/nest.js",
+      "program": "${workspaceFolder}/node_modules/@nestjs/cli/bin/nest.js",
       "args": ["start", "auth", "--debug", "--watch"],
       "cwd": "${workspaceFolder}/apps/auth-service",
       "console": "integratedTerminal",
@@ -22,7 +22,7 @@
       "name": "Debug Task App",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/apps/task-service/node_modules/@nestjs/cli/bin/nest.js",
+      "program": "${workspaceFolder}/node_modules/@nestjs/cli/bin/nest.js",
       "args": ["start", "task", "--debug", "--watch"],
       "cwd": "${workspaceFolder}/apps/task-service",
       "console": "integratedTerminal",
@@ -39,7 +39,7 @@
       "name": "Debug Graphql Gateway App",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/apps/graphql-gateway/node_modules/@nestjs/cli/bin/nest.js",
+      "program": "${workspaceFolder}/node_modules/@nestjs/cli/bin/nest.js",
       "args": ["start", "graphql-gateway", "--debug", "--watch"],
       "cwd": "${workspaceFolder}/apps/graphql-gateway",
       "console": "integratedTerminal",
@@ -52,6 +52,57 @@
         "NODE_ENV": "development"
       }
     },
+    {
+      "name": "Debug File Service App",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/@nestjs/cli/bin/nest.js",
+      "args": ["start", "file-service", "--debug", "--watch"],
+      "cwd": "${workspaceFolder}/apps/file-service",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/apps/file-service/.env",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/apps/file-service/dist/**/*.js"],
+      "runtimeArgs": ["--inspect-brk=9229"],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Debug Analytics Service App",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/@nestjs/cli/bin/nest.js",
+      "args": ["start", "analytics-service", "--debug", "--watch"],
+      "cwd": "${workspaceFolder}/apps/analytics-service",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/apps/analytics-service/.env",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/apps/analytics-service/dist/**/*.js"],
+      "runtimeArgs": ["--inspect-brk=9229"],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Debug Notification Service App",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/@nestjs/cli/bin/nest.js",
+      "args": ["start", "notification-service", "--debug", "--watch"],
+      "cwd": "${workspaceFolder}/apps/notification-service",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/apps/notification-service/.env",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/apps/notification-service/dist/**/*.js"],
+      "runtimeArgs": ["--inspect-brk=9229"],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
   ],
   "compounds": [
     {
@@ -59,7 +110,10 @@
       "configurations": [
         "Debug Auth App",
         "Debug Task App",
-        "Debug Graphql Gateway App"
+        "Debug Graphql Gateway App",
+        "Debug File Service App",
+        "Debug Analytics Service App",
+        "Debug Notification Service App"
       ],
       "stopAll": true,
       "presentation": {
@@ -67,17 +121,5 @@
         "order": 1
       }
     },
-        {
-      "name": "Debug Authen Microservices",
-      "configurations": [
-        "Debug Auth App",
-        "Debug Graphql Gateway App"
-      ],
-      "stopAll": true,
-      "presentation": {
-        "group": "microservices",
-        "order": 1
-      }
-    }
   ]
 }
