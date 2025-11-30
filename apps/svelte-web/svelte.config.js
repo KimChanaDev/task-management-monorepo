@@ -20,7 +20,7 @@ const config = {
 			$consts: 'src/lib/consts',
 			$stores: 'src/lib/stores',
 			$interfaces: 'src/lib/interfaces',
-			$queries: 'src/lib/graphql',
+			$queries: 'src/lib/graphql'
 		}
 	}
 };
