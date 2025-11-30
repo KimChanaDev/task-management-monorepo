@@ -64,7 +64,7 @@ jobs:
         run: npx turbo run generate-ts-proto
 
       - name: Build svelte-web
-        run: npm run build --workspace=apps/svelte-web --workspace=packages/socket
+        run: npm run build --workspace=packages/socket --workspace=apps/svelte-web
 
       - name: Run type check
         run: npm run check-types
