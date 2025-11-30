@@ -63,6 +63,9 @@ jobs:
       - name: Generate gRPC types
         run: npx turbo run generate-ts-proto
 
+      - name: Build svelte-web
+        run: npm run build --workspace=apps/svelte-web
+
       - name: Run type check
         run: npm run check-types
 
