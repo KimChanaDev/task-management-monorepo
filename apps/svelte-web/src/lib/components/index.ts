@@ -8,4 +8,3 @@ export { default as ToastNotification } from './ToastNotification.svelte';
 export { default as ToastContainer } from './ToastContainer.svelte';
 export { default as ActivityFeed } from './ActivityFeed.svelte';
 export { default as ImageUpload } from './ImageUpload.svelte';
-export type { UploadedFile } from './ImageUpload.svelte';

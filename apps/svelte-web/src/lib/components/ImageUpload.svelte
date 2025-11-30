@@ -10,17 +10,6 @@
 		maxFiles?: number;
 	}
 
-	// DELETE THIS INTERFACE IF NOT USED
-	export interface UploadedFile {
-		id: string;
-		filename: string;
-		url: string;
-		thumbnailUrl?: string;
-		size: number;
-		mimeType: string;
-		isNew?: boolean;
-	}
-
 	let {
 		existingFiles = [],
 		pendingFiles = $bindable([]),
