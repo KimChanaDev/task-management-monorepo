@@ -4,6 +4,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { AUTH_QUERIES, USER_QUERIES } from '$queries';
 import { ensureDataExisted, setAuthCookies, clearAuthCookies, findAuthCookies } from '$utils';
 import { GRAPHQL_GATWAY_URL } from '$env/static/private';
+import { print } from 'graphql';
 
 const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register'];
 
@@ -73,12 +74,12 @@ async function fetchUser(accessToken: string): Promise<App.Locals> {
 			Cookie: `AccessToken=${accessToken}`
 		},
 		body: JSON.stringify({
-			query: USER_QUERIES.GET_ME
+			query: print(USER_QUERIES.GET_ME)
 		})
 	});
 
 	if (!response.ok) {
-		throw new Error('Error fetching user');
+		throw new Error(`Error fetching user, status: ${response.status}`);
 	}
 
 	const result = await response.json();
@@ -99,7 +100,7 @@ async function fetchAccessToken(refreshToken: string, event: any): Promise<strin
 			Cookie: `RefreshToken=${refreshToken}`
 		},
 		body: JSON.stringify({
-			query: AUTH_QUERIES.REFRESH_TOKEN
+			query: print(AUTH_QUERIES.REFRESH_TOKEN)
 		})
 	});
 

@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { PulsarConsumerService } from './pulsar/pulsar-consumer.service';
 import { NotificationGateway } from './websocket/notification.gateway';
 import { NotificationService } from './notification/notification.service';
+import { RedisUserSocketService } from './redis/redis-user-socket.service';
 
 @Module({
   imports: [
@@ -12,6 +13,11 @@ import { NotificationService } from './notification/notification.service';
     }),
   ],
   controllers: [AppController],
-  providers: [PulsarConsumerService, NotificationGateway, NotificationService],
+  providers: [
+    RedisUserSocketService,
+    PulsarConsumerService,
+    NotificationGateway,
+    NotificationService,
+  ],
 })
 export class AppModule {}

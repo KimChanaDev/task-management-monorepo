@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { RedisIoAdapter } from './adapters/redis-io.adapter';
 
 async function bootstrap() {
   const logger = new Logger('NotificationService');
@@ -11,6 +12,11 @@ async function bootstrap() {
   const httpPort = configService.getOrThrow('HTTP_PORT');
   const nodeEnv = configService.getOrThrow('NODE_ENV');
   const clientUrl = configService.get('CLIENT_URL');
+
+  // Setup Redis adapter for Socket.IO (enables horizontal scaling)
+  const redisIoAdapter = new RedisIoAdapter(app, configService);
+  await redisIoAdapter.connectToRedis();
+  app.useWebSocketAdapter(redisIoAdapter);
 
   // Enable CORS
   app.enableCors({

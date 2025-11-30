@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { AUTH_QUERIES } from '$queries';
 import { setAuthCookies, findAuthCookies, clearAuthCookies } from '$utils';
 import { GRAPHQL_GATWAY_URL } from '$env/static/private';
+import { print } from 'graphql';
 
 /**
  * API endpoint for refreshing access token
@@ -21,11 +22,11 @@ export const POST: RequestHandler = async ({ cookies, fetch }) => {
 				Cookie: `RefreshToken=${refreshToken}`
 			},
 			body: JSON.stringify({
-				query: AUTH_QUERIES.REFRESH_TOKEN
+				query: print(AUTH_QUERIES.REFRESH_TOKEN)
 			})
 		});
 		if (!response.ok) {
-			throw new Error('Failed to refresh token');
+			throw new Error(`Failed to refresh token, status: ${response.status}`);
 		}
 		const result = await response.json();
 		if (!result.data?.refreshAccessToken) {

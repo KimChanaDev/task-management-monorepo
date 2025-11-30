@@ -84,13 +84,13 @@ export class AuthService implements OnModuleInit {
     response.cookie('AccessToken', accessToken, {
       httpOnly: true,
       secure,
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: Utility.parseExpiresIn(accessTokenExpiresIn),
     });
     response.cookie('RefreshToken', refreshToken, {
       httpOnly: true,
       secure,
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: Utility.parseExpiresIn(refreshTokenExpiresIn),
     });
   }

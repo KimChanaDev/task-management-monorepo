@@ -110,6 +110,7 @@ services:
       HTTP_PORT: 4004
       PULSAR_SERVICE_URL: "pulsar://pulsar:6650"
       CLIENT_URL: "http://localhost:4003"
+      REDIS_URL: "redis://redis:6379"
     ports:
       - '4004:4004'
     depends_on:
@@ -134,7 +135,6 @@ services:
       HTTP_PORT: 4005
       GRPC_PORT: 5005
       PULSAR_SERVICE_URL: "pulsar://pulsar:6650"
-      AUTH_SERVICE_GRPC_URL: auth-service:5000
     ports:
       - '4005:4005'
       - '5005:5005'
@@ -159,12 +159,14 @@ services:
         GRAPHQL_GATWAY_URL: http://graphql-gateway:4002
         PUBLIC_GRAPHQL_GATWAY_URL: http://localhost:4002
         PUBLIC_NOTIFICATION_WS_URL: http://localhost:4004
+        PUBLIC_AUTH_SECURE_COOKIES: false
     container_name: task-platform-svelte-web
     environment:
       PORT: 4003
       GRAPHQL_GATWAY_URL: http://graphql-gateway:4002
       PUBLIC_GRAPHQL_GATWAY_URL: http://localhost:4002
       PUBLIC_NOTIFICATION_WS_URL: http://localhost:4004
+      PUBLIC_AUTH_SECURE_COOKIES: false
     ports:
       - '4003:4003'
 
