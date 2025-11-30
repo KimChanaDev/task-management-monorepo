@@ -1,0 +1,17 @@
+# PostgreSQL Service
+# use ClusterIP because access only in the cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: task-platform-infra
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432

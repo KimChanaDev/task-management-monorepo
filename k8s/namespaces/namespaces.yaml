@@ -1,0 +1,31 @@
+# Namespace of Infrastructure services (Database, Cache, Message Broker)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: task-platform-infra
+  labels:
+    name: task-platform-infra
+    environment: local
+    project: task-platform
+
+---
+# Namespace of Application services
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: task-platform-apps
+  labels:
+    name: task-platform-apps
+    environment: local
+    project: task-platform
+
+---
+# Namespace of Monitoring services
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: task-platform-monitor
+  labels:
+    name: task-platform-monitor
+    environment: local
+    project: task-platform

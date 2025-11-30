@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql-gateway
+  namespace: task-platform-apps
+  labels:
+    app: graphql-gateway
+    tier: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: graphql-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: graphql-gateway
+        tier: gateway
+    spec:
+      initContainers:
+        - name: wait-for-auth-service
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Auth Service..."
+              until nc -z auth-service.task-platform-apps.svc.cluster.local 5000; do
+                echo "Auth Service not ready, waiting..."
+                sleep 2
+              done
+              echo "Auth Service is ready!"
+        - name: wait-for-task-service
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Task Service..."
+              until nc -z task-service.task-platform-apps.svc.cluster.local 5001; do
+                echo "Task Service not ready, waiting..."
+                sleep 2
+              done
+              echo "Task Service is ready!"
+        - name: wait-for-analytics-service
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Analytics Service..."
+              until nc -z analytics-service.task-platform-apps.svc.cluster.local 5005; do
+                echo "Analytics Service not ready, waiting..."
+                sleep 2
+              done
+              echo "Analytics Service is ready!"
+        - name: wait-for-file-service
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for File Service..."
+              until nc -z file-service.task-platform-apps.svc.cluster.local 50046; do
+                echo "File Service not ready, waiting..."
+                sleep 2
+              done
+              echo "File Service is ready!"
+      containers:
+        - name: graphql-gateway
+          image: task-platform/graphql-gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4002
+              name: http
+          envFrom:
+            - configMapRef:
+                name: graphql-gateway-config
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 4002
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 4002
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3

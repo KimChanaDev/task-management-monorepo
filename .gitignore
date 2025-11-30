@@ -37,4 +37,9 @@ yarn-error.log*
 .DS_Store
 *.pem
 
+# Kubernetes Secrets (NEVER commit these!)
+k8s/**/secret.yaml
+k8s/**/*-secret.yaml
+*.secret.yaml
+
 md

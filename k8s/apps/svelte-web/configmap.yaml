@@ -1,0 +1,15 @@
+# This configmap is "Reference" for the build arguments needed during the Docker image build process.
+# The actual environment variable that Svelte uses must set build arguments on the Docker build process
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: svelte-web-config
+  namespace: task-platform-apps
+data:
+  PORT: "4003"
+  # Internal URL for SSR (server-side)
+  GRAPHQL_GATWAY_URL: "http://graphql-gateway.task-platform-apps.svc.cluster.local:4002"
+  # Public URLs for browser (without /graphql suffix - it's added in code)
+  PUBLIC_GRAPHQL_GATWAY_URL: "http://task-platform.local"
+  PUBLIC_NOTIFICATION_WS_URL: "http://task-platform.local"
+  PUBLIC_AUTH_SECURE_COOKIES: "false"

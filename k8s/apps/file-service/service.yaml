@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: file-service
+  namespace: task-platform-apps
+  labels:
+    app: file-service
+spec:
+  type: ClusterIP
+  selector:
+    app: file-service
+  ports:
+    - name: http
+      port: 4006
+      targetPort: 4006
+    - name: grpc
+      port: 50046
+      targetPort: 50046

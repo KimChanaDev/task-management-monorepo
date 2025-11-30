@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  namespace: task-platform-apps
+  labels:
+    app: analytics-service
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: analytics-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+        tier: backend
+    spec:
+      initContainers:
+        - name: wait-for-timescaledb
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for TimescaleDB..."
+              until nc -z timescaledb.task-platform-infra.svc.cluster.local 5432; do
+                echo "TimescaleDB not ready, waiting..."
+                sleep 2
+              done
+              echo "TimescaleDB is ready!"
+        - name: wait-for-pulsar
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Pulsar..."
+              until nc -z pulsar.task-platform-infra.svc.cluster.local 6650; do
+                echo "Pulsar not ready, waiting..."
+                sleep 5
+              done
+              echo "Pulsar is ready!"
+      containers:
+        - name: analytics-service
+          image: task-platform/analytics-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4005
+              name: http
+            - containerPort: 5005
+              name: grpc
+          envFrom:
+            - configMapRef:
+                name: analytics-service-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-service-secret
+                  key: database-url
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 4005
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 4005
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3

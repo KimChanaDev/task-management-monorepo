@@ -1,0 +1,82 @@
+# Ingress acts as a reverse proxy, managing routing from the outside to services within the cluster.
+# Ingress for Task Platform
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: task-platform-ingress
+  namespace: task-platform-apps
+  annotations:
+    # NGINX Ingress Controller annotations
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # WebSocket support
+    nginx.ingress.kubernetes.io/websocket-services: "notification-service"
+    # CORS configuration
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    # Cookie/Header forwarding - Important for authentication
+    nginx.ingress.kubernetes.io/proxy-cookie-path: "/ /"
+spec:
+  ingressClassName: nginx
+  rules:
+    # Main domain
+    - host: task-platform.local
+      http:
+        paths:
+          # Frontend - Svelte Web
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: svelte-web
+                port:
+                  number: 4003
+          # GraphQL API Gateway
+          # http://task-platform.local/graphql → Ingress → http://graphql-gateway:4002/graphql
+          - path: /graphql
+            pathType: Prefix
+            backend:
+              service:
+                name: graphql-gateway
+                port:
+                  number: 4002
+          # WebSocket endpoint
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: 4004
+          # Socket.io endpoint
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: 4004
+
+---
+# Ingress for API subdomain (optional)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: task-platform-apps
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.task-platform.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: graphql-gateway
+                port:
+                  number: 4002

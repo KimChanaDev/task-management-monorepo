@@ -1,0 +1,16 @@
+# PersistentVolumeClaim for PostgreSQL
+# Store data even if Pod are deleted
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: task-platform-infra
+  labels:
+    app: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce # Can mount only one node (suitable for a database)
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard # minikube default storage class

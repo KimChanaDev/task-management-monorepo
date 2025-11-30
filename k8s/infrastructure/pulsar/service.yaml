@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pulsar
+  namespace: task-platform-infra
+  labels:
+    app: pulsar
+spec:
+  type: ClusterIP
+  selector:
+    app: pulsar
+  ports:
+    - name: pulsar
+      port: 6650
+      targetPort: 6650
+    - name: admin
+      port: 8080
+      targetPort: 8080

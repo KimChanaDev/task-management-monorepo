@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pulsar
+  namespace: task-platform-infra
+  labels:
+    app: pulsar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pulsar
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: pulsar
+    spec:
+      containers:
+        - name: pulsar
+          image: apachepulsar/pulsar:4.1.1
+          command:
+            - bin/pulsar
+            - standalone
+          ports:
+            - containerPort: 6650
+              name: pulsar
+            - containerPort: 8080
+              name: admin
+          env:
+            # Limit JVM heap size to prevent OOM
+            - name: PULSAR_MEM
+              value: "-Xms512m -Xmx1g -XX:MaxDirectMemorySize=512m"
+          volumeMounts:
+            - name: pulsar-storage
+              mountPath: /pulsar/data
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          readinessProbe:
+            httpGet:
+              path: /admin/v2/brokers/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /admin/v2/brokers/health
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: pulsar-storage
+          persistentVolumeClaim:
+            claimName: pulsar-pvc
