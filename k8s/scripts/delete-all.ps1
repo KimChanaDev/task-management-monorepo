@@ -59,7 +59,10 @@ if (-not $KeepInfra) {
     $infra = @("minio", "pulsar", "timescaledb", "redis", "postgres")
     foreach ($i in $infra) {
         Write-Host "  - Deleting $i..." -ForegroundColor Gray
-        kubectl delete -f "infrastructure/$i/" --ignore-not-found=true 2>$null
+        # delete all yaml files except pvc.yaml
+        Get-ChildItem -Path "infrastructure/$i/" -Filter "*.yaml" | Where-Object { $_.Name -ne "pvc.yaml" } | ForEach-Object {
+            kubectl delete -f $_.FullName --ignore-not-found=true 2>$null
+        }
     }
     Write-Host "✓ Infrastructure deleted" -ForegroundColor Green
 } else {
@@ -71,18 +74,18 @@ if (-not $KeepData) {
     Write-Host "`n[Step 5] Deleting Persistent Volume Claims..." -ForegroundColor Cyan
     kubectl delete pvc --all -n task-platform-infra --ignore-not-found=true
     Write-Host "✓ PVCs deleted" -ForegroundColor Green
+
+    # Delete Namespaces (optional - delete everything in the namespace)
+    $deleteNamespaces = Read-Host "Delete namespaces too? (y/n)"
+    if ($deleteNamespaces -eq "y") {
+        kubectl delete -f namespaces/ --ignore-not-found=true
+        Write-Host "✓ Namespaces deleted" -ForegroundColor Green
+    } else {
+        Write-Host "  Namespaces kept" -ForegroundColor Yellow
+    }
 } else {
     Write-Host "`n[Step 5] Keeping PVCs (--KeepData flag)" -ForegroundColor Yellow
-}
-
-# Delete Namespaces (optional - delete everything in the namespace)
-Write-Host "`n[Step 6] Deleting Namespaces..." -ForegroundColor Cyan
-$deleteNamespaces = Read-Host "Delete namespaces too? (y/n)"
-if ($deleteNamespaces -eq "y") {
-    kubectl delete -f namespaces/ --ignore-not-found=true
-    Write-Host "✓ Namespaces deleted" -ForegroundColor Green
-} else {
-    Write-Host "  Namespaces kept" -ForegroundColor Yellow
+    Write-Host "`n[Step 6] Keeping Namespaces (--KeepData flag)" -ForegroundColor Yellow
 }
 
 Write-Host "`n============================================" -ForegroundColor Green
