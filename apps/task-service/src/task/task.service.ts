@@ -99,7 +99,7 @@ export class TaskService {
     if (req.assignedTo) {
       await this.authExternalService.validateUserExists(req.assignedTo);
     }
-    const before = TaskLogic.mapTaskUpdateDetailsObject(task!);
+    const before = TaskLogic.mapTaskUpdateDetailsObject(task);
     const updateData: Prisma.TaskUpdateInput = {
       title: req.title,
       description: req.description || null,
@@ -138,7 +138,7 @@ export class TaskService {
     TaskValidation.ensureTaskFound(task, id);
     await this.taskRepository.deleteTaskById(id);
     try {
-      const event: TaskDeletedEvent = TaskLogic.mapDeleteTaskEvent(task!);
+      const event: TaskDeletedEvent = TaskLogic.mapDeleteTaskEvent(task);
       await this.pulsarService.publishTaskEvent(event);
     } catch (error) {
       this.logger.error('Failed to publish TaskDeleted event', error);

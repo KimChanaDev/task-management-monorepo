@@ -2,9 +2,9 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { AUTH_QUERIES } from '$queries';
 import { setAuthCookies, findAuthCookies, clearAuthCookies } from '$utils';
-import { GRAPHQL_GATWAY_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { print } from 'graphql';
-
+const GRAPHQL_GATWAY_URL = env.GRAPHQL_GATWAY_URL ?? 'http://localhost:4002';
 /**
  * API endpoint for refreshing access token
  * Called by the urql auth exchange when access token expires
