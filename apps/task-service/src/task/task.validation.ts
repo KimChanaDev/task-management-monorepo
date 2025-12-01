@@ -14,7 +14,10 @@ import {
 import { Prisma } from '@prisma/client/task-service/index.js';
 
 export class TaskValidation {
-  static ensureTaskFound(task: Prisma.TaskGetPayload<any> | null, id: string) {
+  static ensureTaskFound(
+    task: Prisma.TaskGetPayload<any> | null,
+    id: string,
+  ): asserts task is Prisma.TaskGetPayload<any> {
     if (!task) {
       throw new NotFoundRpcException(`Task with ID ${id} not found`);
     }
