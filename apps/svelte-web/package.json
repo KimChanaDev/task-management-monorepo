@@ -29,6 +29,7 @@
 		"vite": "^7.1.10"
 	},
 	"dependencies": {
+		"@repo/socket": "*",
 		"@sveltejs/kit": "^2.48.4",
 		"@urql/exchange-auth": "^3.0.0",
 		"@urql/svelte": "^5.0.0",
