@@ -1,5 +1,6 @@
 import { COOKIE_MAX_AGE } from '$consts';
-import { PUBLIC_AUTH_SECURE_COOKIES } from '$env/static/public';
+import { env } from '$env/dynamic/public';
+const PUBLIC_AUTH_SECURE_COOKIES = env.PUBLIC_AUTH_SECURE_COOKIES ?? 'false';
 
 export function findAuthCookies(
 	setCookieHeader: string | null,

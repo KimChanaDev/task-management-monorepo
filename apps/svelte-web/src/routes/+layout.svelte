@@ -1,12 +1,12 @@
 <script lang="ts">
 	import '../app.css';
 	import { createClient, cacheExchange, fetchExchange, setContextClient } from '@urql/svelte';
-	import { PUBLIC_GRAPHQL_GATWAY_URL } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import { authExchange } from '$lib/urql/auth-exchange';
 
 	// GraphQL client setup with auth exchange for automatic token refresh
 	const client = createClient({
-		url: `${PUBLIC_GRAPHQL_GATWAY_URL}/graphql`,
+		url: `${env.PUBLIC_GRAPHQL_GATWAY_URL ?? 'http://localhost:4002'}/graphql`,
 		exchanges: [cacheExchange, authExchange, fetchExchange],
 		fetchOptions: {
 			credentials: 'include' // Include cookies in requests

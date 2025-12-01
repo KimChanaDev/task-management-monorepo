@@ -1,7 +1,8 @@
 import { writable } from 'svelte/store';
 import { io, type Socket } from 'socket.io-client';
 import type { Notification } from '@repo/socket/types';
-import { PUBLIC_NOTIFICATION_WS_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
+const PUBLIC_NOTIFICATION_WS_URL = env.PUBLIC_NOTIFICATION_WS_URL ?? 'http://localhost:4004';
 
 interface WebSocketState {
 	connected: boolean;

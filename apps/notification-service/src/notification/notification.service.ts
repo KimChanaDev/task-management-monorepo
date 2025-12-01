@@ -52,7 +52,7 @@ export class NotificationService implements OnModuleInit {
       const data: TaskCreatedEvent = JSON.parse(message.getData().toString());
       this.logger.log(`Received TaskCreated event: ${data.task.id}`);
       const notification = NotificationLogic.mapNotificationMessage(data);
-      this.notificationGateway.sendNotificationToUser(
+      void this.notificationGateway.sendNotificationToUser(
         data.task.createdById,
         notification,
       );
@@ -66,7 +66,7 @@ export class NotificationService implements OnModuleInit {
           notification as TaskCreatedNotification,
           data,
         );
-        this.notificationGateway.sendNotificationToUser(
+        void this.notificationGateway.sendNotificationToUser(
           data.task.assignedToId,
           assigneeNotification,
         );
@@ -82,7 +82,7 @@ export class NotificationService implements OnModuleInit {
       const data: TaskUpdatedEvent = JSON.parse(message.getData().toString());
       this.logger.log(`Received TaskUpdated event: ${data.taskId}`);
       const notification = NotificationLogic.mapNotificationMessage(data);
-      this.notificationGateway.sendNotificationToUser(
+      void this.notificationGateway.sendNotificationToUser(
         data.userId,
         notification,
       );
@@ -90,7 +90,7 @@ export class NotificationService implements OnModuleInit {
       if (!data.changes.before.assignedTo && data.changes.after.assignedTo) {
         const newAssigneeNotification =
           NotificationLogic.mapNewAssignedNotification(data);
-        this.notificationGateway.sendNotificationToUser(
+        void this.notificationGateway.sendNotificationToUser(
           data.changes.after.assignedTo,
           newAssigneeNotification,
         );
@@ -98,12 +98,12 @@ export class NotificationService implements OnModuleInit {
         data.changes.before.assignedTo &&
         !data.changes.after.assignedTo
       ) {
-        this.notificationGateway.sendNotificationToUser(
+        void this.notificationGateway.sendNotificationToUser(
           data.changes.before.assignedTo,
           notification,
         );
       } else if (data.assignedToId) {
-        this.notificationGateway.sendNotificationToUser(
+        void this.notificationGateway.sendNotificationToUser(
           data.assignedToId,
           notification,
         );
@@ -118,12 +118,12 @@ export class NotificationService implements OnModuleInit {
     try {
       const data: TaskDeletedEvent = JSON.parse(message.getData().toString());
       this.logger.log(`Received TaskDeleted event: ${data.taskId}`);
-      this.notificationGateway.sendNotificationToUser(
+      void this.notificationGateway.sendNotificationToUser(
         data.userId,
         NotificationLogic.mapNotificationMessage(data),
       );
       if (data.assignedToId) {
-        this.notificationGateway.sendNotificationToUser(
+        void this.notificationGateway.sendNotificationToUser(
           data.assignedToId,
           NotificationLogic.mapNotificationMessage(data),
         );

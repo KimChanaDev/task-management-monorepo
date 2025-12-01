@@ -3,8 +3,9 @@ import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { AUTH_QUERIES, USER_QUERIES } from '$queries';
 import { ensureDataExisted, setAuthCookies, clearAuthCookies, findAuthCookies } from '$utils';
-import { GRAPHQL_GATWAY_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { print } from 'graphql';
+const GRAPHQL_GATWAY_URL = env.GRAPHQL_GATWAY_URL ?? 'http://localhost:4002';
 
 const PUBLIC_ROUTES = ['/', '/auth/login', '/auth/register'];
 

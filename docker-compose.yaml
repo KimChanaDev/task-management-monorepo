@@ -154,12 +154,6 @@ services:
     build:
       context: .
       dockerfile: ./apps/svelte-web/Dockerfile
-      args:
-        PORT: 4003
-        GRAPHQL_GATWAY_URL: http://graphql-gateway:4002
-        PUBLIC_GRAPHQL_GATWAY_URL: http://localhost:4002
-        PUBLIC_NOTIFICATION_WS_URL: http://localhost:4004
-        PUBLIC_AUTH_SECURE_COOKIES: false
     container_name: task-platform-svelte-web
     environment:
       PORT: 4003

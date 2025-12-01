@@ -25,14 +25,15 @@ $projectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 Set-Location $projectRoot
 Write-Host "Project root: $projectRoot" -ForegroundColor Gray
 
-# Build backend services
+# Build all services
 $services = @(
     @{Name = "auth-service"; Dockerfile = "apps/auth-service/Dockerfile" },
     @{Name = "task-service"; Dockerfile = "apps/task-service/Dockerfile" },
     @{Name = "graphql-gateway"; Dockerfile = "apps/graphql-gateway/Dockerfile" },
-    @{Name = "notification-service"; Dockerfile = "apps/notification-service/Dockerfile" }
+    @{Name = "notification-service"; Dockerfile = "apps/notification-service/Dockerfile" },
     @{Name = "analytics-service"; Dockerfile = "apps/analytics-service/Dockerfile" },
-    @{Name = "file-service"; Dockerfile = "apps/file-service/Dockerfile" }
+    @{Name = "file-service"; Dockerfile = "apps/file-service/Dockerfile" },
+    @{Name = "svelte-web"; Dockerfile = "apps/svelte-web/Dockerfile" }
 )
 foreach ($service in $services) {
     Write-Host "`n----------------------------------------" -ForegroundColor Gray
@@ -52,31 +53,6 @@ foreach ($service in $services) {
         exit 1
     }
 }
-
-# Build frontend (Svelte Web) with build args
-Write-Host "`n----------------------------------------" -ForegroundColor Gray
-Write-Host "Building: task-platform/svelte-web:latest" -ForegroundColor Green
-Write-Host "Dockerfile: apps/svelte-web/Dockerfile" -ForegroundColor Gray
-
-docker build -t "task-platform/svelte-web:latest" `
-    --build-arg PORT=4003 `
-    --build-arg GRAPHQL_GATWAY_URL=http://graphql-gateway.task-platform-apps.svc.cluster.local:4002 `
-    --build-arg PUBLIC_AUTH_SECURE_COOKIES=false `
-    --build-arg PUBLIC_GRAPHQL_GATWAY_URL=http://task-platform.local `
-    --build-arg PUBLIC_NOTIFICATION_WS_URL=http://task-platform.local `
-    -f apps/svelte-web/Dockerfile .
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "✓ Successfully built task-platform/svelte-web:latest" -ForegroundColor Green
-}
-else {
-    Write-Host "✗ Failed to build task-platform/svelte-web:latest" -ForegroundColor Red
-    # Set Docker environment to use Local Machine before exiting
-    Write-Host "`nSetting Docker environment back to use Local Machine..." -ForegroundColor Yellow
-    & minikube -p minikube docker-env --unset --shell powershell | Invoke-Expression 2>$null
-    exit 1
-}
-
 Write-Host "`n============================================" -ForegroundColor Cyan
 Write-Host "All images built successfully!" -ForegroundColor Green
 Write-Host "============================================" -ForegroundColor Cyan
