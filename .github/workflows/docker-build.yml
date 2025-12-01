@@ -1,0 +1,432 @@
+name: Docker Build & Push
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to build (or "all" for all services)'
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - auth-service
+          - task-service
+          - analytics-service
+          - notification-service
+          - file-service
+          - graphql-gateway
+          - svelte-web
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/task-platform
+
+jobs:
+  # ===========================================
+  # Determine which services to build
+  # ===========================================
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    # Specify outputs that will be sent to other jobs.
+    # Each output can be either 'true' or 'false', indicating whether the service has changed.
+    outputs:
+      auth-service: ${{ steps.changes.outputs.auth-service }}
+      task-service: ${{ steps.changes.outputs.task-service }}
+      analytics-service: ${{ steps.changes.outputs.analytics-service }}
+      notification-service: ${{ steps.changes.outputs.notification-service }}
+      file-service: ${{ steps.changes.outputs.file-service }}
+      graphql-gateway: ${{ steps.changes.outputs.graphql-gateway }}
+      svelte-web: ${{ steps.changes.outputs.svelte-web }}
+      packages: ${{ steps.changes.outputs.packages }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            auth-service:
+              - 'apps/auth-service/**'
+              - 'packages/**'
+            task-service:
+              - 'apps/task-service/**'
+              - 'packages/**'
+            analytics-service:
+              - 'apps/analytics-service/**'
+              - 'packages/**'
+            notification-service:
+              - 'apps/notification-service/**'
+              - 'packages/**'
+            file-service:
+              - 'apps/file-service/**'
+              - 'packages/**'
+            graphql-gateway:
+              - 'apps/graphql-gateway/**'
+              - 'packages/**'
+            svelte-web:
+              - 'apps/svelte-web/**'
+              - 'packages/**'
+            packages:
+              - 'packages/**'
+
+  # ===========================================
+  # Build and Push Docker Images
+  # ===========================================
+  build-auth-service:
+    name: Build Auth Service
+    needs: changes
+    # The user manually presses Run workflow and selects "all".
+    # or The user selects to build only "auth-service".
+    # or A file in apps/auth-service/** or packages/** has changed.
+    # or A Git tag is created that starts with v (e.g. v1.0.0).
+    if: |
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'auth-service') ||
+      needs.changes.outputs.auth-service == 'true' ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # Allow reading of files in the project
+      packages: write # Allow pushing Docker images to GitHub Packages (ghcr.io)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+        # Multi-platform builds (build for ARM, AMD64 simultaneously)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }} # Username that triggers the workflow
+          password: ${{ secrets.GITHUB_TOKEN }} # Automatic token from GitHub
+
+      # Automatically generate Docker tags based on events:
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # eg.
+          # ghcr.io/kimchanadev/task-platform/auth-service:main (when pushed to main branch)
+          # ghcr.io/kimchanadev/task-platform/auth-service:pr-15 (when PR #15 is opened)
+          # ghcr.io/kimchanadev/task-platform/auth-service:1.2.3 (when pushed tag v1.2.3)
+          # ghcr.io/kimchanadev/task-platform/auth-service:1.2 (when pushed tag v1.2.X)
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/auth-service
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/auth-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }} # Add metadata labels (version, commit, etc.)
+          cache-from: type=gha # GitHub Actions cache
+          cache-to: type=gha,mode=max # Save cache back (mode=max = cache all layers)
+
+  build-task-service:
+    name: Build Task Service
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'task-service') ||
+      needs.changes.outputs.task-service == 'true' ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/task-service
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/task-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-analytics-service:
+    name: Build Analytics Service
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'analytics-service') ||
+      needs.changes.outputs.analytics-service == 'true' ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/analytics-service
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/analytics-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-notification-service:
+    name: Build Notification Service
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'notification-service') ||
+      needs.changes.outputs.notification-service == 'true' ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/notification-service
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/notification-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-file-service:
+    name: Build File Service
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'file-service') ||
+      needs.changes.outputs.file-service == 'true' ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/file-service
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/file-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-graphql-gateway:
+    name: Build GraphQL Gateway
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'graphql-gateway') ||
+      needs.changes.outputs.graphql-gateway == 'true' ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/graphql-gateway
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/graphql-gateway/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-svelte-web:
+    name: Build Svelte Web
+    needs: changes
+    if: |
+      github.event_name == 'workflow_dispatch' && (github.event.inputs.service == 'all' || github.event.inputs.service == 'svelte-web') ||
+      needs.changes.outputs.svelte-web == 'true' ||
+      startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/svelte-web
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/svelte-web/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            PUBLIC_GRAPHQL_URL=${{ vars.PUBLIC_GRAPHQL_URL }}
+            PUBLIC_WS_URL=${{ vars.PUBLIC_WS_URL }}
