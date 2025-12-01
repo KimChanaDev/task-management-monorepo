@@ -11,7 +11,6 @@ COPY apps/svelte-web/package*.json ./apps/svelte-web/
 RUN npm install
 
 COPY apps/svelte-web ./apps/svelte-web
-WORKDIR /app/apps/svelte-web
 RUN npm run build
 
 ##################################
