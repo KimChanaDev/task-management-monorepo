@@ -1,0 +1,237 @@
+name: Deploy to Vultr Kubernetes
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      service:
+        description: 'Service to deploy (or "all" for all services)'
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - auth-service
+          - task-service
+          - analytics-service
+          - notification-service
+          - file-service
+          - graphql-gateway
+          - svelte-web
+      image_tag:
+        description: "Docker image tag to deploy (default: main)"
+        required: false
+        default: "main"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/task-platform
+  VULTR_CLUSTER_REGION: sgp  # Singapore datacenter
+
+jobs:
+  # ===========================================
+  # Deploy to Staging (Vultr Kubernetes)
+  # ===========================================
+  deploy-staging:
+    name: Deploy to Vultr Staging
+    if: github.event.inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.34.1"
+
+      - name: Configure kubectl for Vultr
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          
+          # Verify connection to Vultr cluster
+          echo "🔗 Connecting to Vultr Kubernetes cluster..."
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Update image tags in manifests
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+          SERVICE="${{ github.event.inputs.service }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
+          else
+            SERVICES="$SERVICE"
+          fi
+
+          for svc in $SERVICES; do
+            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
+              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
+            fi
+          done
+
+      - name: Deploy to Kubernetes
+        run: |
+          SERVICE="${{ github.event.inputs.service }}"
+          NAMESPACE="task-platform-staging"
+
+          # Apply namespace
+          kubectl apply -f k8s/namespaces/
+
+          if [ "$SERVICE" == "all" ]; then
+            # Deploy infrastructure first
+            kubectl apply -f k8s/infrastructure/ -n $NAMESPACE --recursive || true
+            
+            # Deploy all apps
+            kubectl apply -f k8s/apps/ -n $NAMESPACE --recursive
+            
+            # Apply ingress
+            kubectl apply -f k8s/ingress/ -n $NAMESPACE
+          else
+            # Deploy specific service
+            kubectl apply -f k8s/apps/$SERVICE/ -n $NAMESPACE --recursive
+          fi
+
+      - name: Verify deployment
+        run: |
+          NAMESPACE="task-platform-staging"
+          SERVICE="${{ github.event.inputs.service }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            kubectl rollout status deployment -n $NAMESPACE --timeout=300s
+          else
+            kubectl rollout status deployment/$SERVICE -n $NAMESPACE --timeout=300s
+          fi
+
+      - name: Send deployment notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "Vultr Staging Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚀 Vultr Staging Deployment*\n*Status:* ${{ job.status }}\n*Service:* ${{ github.event.inputs.service }}\n*Tag:* ${{ github.event.inputs.image_tag }}\n*Actor:* ${{ github.actor }}\n*Cluster:* Vultr VKE (Singapore)"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+  # ===========================================
+  # Deploy to Production (Vultr Kubernetes)
+  # ===========================================
+  deploy-production:
+    name: Deploy to Vultr Production
+    if: github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.29.0"
+
+      - name: Configure kubectl for Vultr
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          
+          # Verify connection to Vultr cluster
+          echo "🔗 Connecting to Vultr Kubernetes cluster..."
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Update image tags in manifests
+        run: |
+          IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+          SERVICE="${{ github.event.inputs.service }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
+          else
+            SERVICES="$SERVICE"
+          fi
+
+          for svc in $SERVICES; do
+            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
+              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
+            fi
+          done
+
+      - name: Deploy to Kubernetes
+        run: |
+          SERVICE="${{ github.event.inputs.service }}"
+          NAMESPACE="task-platform"
+
+          # Apply namespace
+          kubectl apply -f k8s/namespaces/
+
+          if [ "$SERVICE" == "all" ]; then
+            # Deploy infrastructure first
+            kubectl apply -f k8s/infrastructure/ -n $NAMESPACE --recursive || true
+            
+            # Deploy all apps
+            kubectl apply -f k8s/apps/ -n $NAMESPACE --recursive
+            
+            # Apply ingress
+            kubectl apply -f k8s/ingress/ -n $NAMESPACE
+            
+            # Apply HPA
+            kubectl apply -f k8s/apps/hpa.yaml -n $NAMESPACE
+          else
+            # Deploy specific service
+            kubectl apply -f k8s/apps/$SERVICE/ -n $NAMESPACE --recursive
+          fi
+
+      - name: Verify deployment
+        run: |
+          NAMESPACE="task-platform"
+          SERVICE="${{ github.event.inputs.service }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            kubectl rollout status deployment -n $NAMESPACE --timeout=300s
+          else
+            kubectl rollout status deployment/$SERVICE -n $NAMESPACE --timeout=300s
+          fi
+
+      - name: Send deployment notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "Vultr Production Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚀 Vultr Production Deployment*\n*Status:* ${{ job.status }}\n*Service:* ${{ github.event.inputs.service }}\n*Tag:* ${{ github.event.inputs.image_tag }}\n*Actor:* ${{ github.actor }}\n*Cluster:* Vultr VKE (Singapore)"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
