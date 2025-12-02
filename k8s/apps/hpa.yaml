@@ -11,7 +11,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: auth-service
-  minReplicas: 2 # Minimum pods
+  minReplicas: 1 # Minimum pods
   maxReplicas: 10 # Maximum pods
   metrics:
     - type: Resource
@@ -52,7 +52,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: task-service
-  minReplicas: 2
+  minReplicas: 1
   maxReplicas: 10
   metrics:
     - type: Resource
@@ -80,7 +80,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: graphql-gateway
-  minReplicas: 2
+  minReplicas: 1
   maxReplicas: 10
   metrics:
     - type: Resource
@@ -108,7 +108,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: svelte-web
-  minReplicas: 2
+  minReplicas: 1
   maxReplicas: 8
   metrics:
     - type: Resource
