@@ -1,5 +1,6 @@
 # PersistentVolumeClaim for PostgreSQL
 # Store data even if Pod are deleted
+# Note: StorageClass is automatically updated during CI/CD deployment
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -13,4 +14,4 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: standard # minikube default storage class
+  storageClassName: standard # minikube default storage class & Auto-replaced by CI/CD for cloud deployment

@@ -33,6 +33,25 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}/task-platform
   VULTR_CLUSTER_REGION: sgp  # Singapore datacenter
+  # ===========================================
+  # Storage Class Configuration
+  # ===========================================
+  # Options:
+  #   - vultr-block-storage         : SSD, Delete policy (~$1/10GB/mo)
+  #   - vultr-block-storage-retain  : SSD, Retain policy (data persists after PVC deletion)
+  #   - vultr-block-storage-hdd     : HDD, Delete policy (~$1/40GB/mo, cheaper)
+  #   - vultr-block-storage-hdd-retain : HDD, Retain policy
+  #
+  # Recommendations:
+  #   - SSD: databases requiring fast I/O (postgres, redis, timescaledb)
+  #   - HDD: large storage, less I/O intensive (minio, logs, backups)
+  # ===========================================
+  STORAGE_CLASS_POSTGRES: vultr-block-storage       # Main database - SSD for performance
+  STORAGE_CLASS_REDIS: vultr-block-storage          # Cache - SSD for speed
+  STORAGE_CLASS_TIMESCALEDB: vultr-block-storage    # Time-series DB - SSD
+  STORAGE_CLASS_MINIO: vultr-block-storage-hdd      # File storage - HDD to save cost
+  STORAGE_CLASS_PULSAR: vultr-block-storage-hdd     # Message queue - HDD
+  STORAGE_CLASS_DEFAULT: vultr-block-storage        # Fallback for any other PVCs
 
 jobs:
   # ===========================================
@@ -79,6 +98,42 @@ jobs:
               sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
             fi
           done
+
+      - name: Update StorageClass for Vultr (per application)
+        run: |
+          echo "🔧 Updating StorageClass per application..."
+          echo ""
+          
+          # Function to update storage class for a specific PVC file
+          update_storage_class() {
+            local file=$1
+            local storage_class=$2
+            local app_name=$3
+            if [ -f "$file" ]; then
+              sed -i "s/storageClassName: .*/storageClassName: $storage_class/g" "$file"
+              echo "  ✅ $app_name → $storage_class"
+            fi
+          }
+          
+          echo "📦 Infrastructure Storage:"
+          update_storage_class "k8s/infrastructure/postgres/pvc.yaml" "${{ env.STORAGE_CLASS_POSTGRES }}" "PostgreSQL"
+          update_storage_class "k8s/infrastructure/redis/pvc.yaml" "${{ env.STORAGE_CLASS_REDIS }}" "Redis"
+          update_storage_class "k8s/infrastructure/timescaledb/pvc.yaml" "${{ env.STORAGE_CLASS_TIMESCALEDB }}" "TimescaleDB"
+          update_storage_class "k8s/infrastructure/minio/pvc.yaml" "${{ env.STORAGE_CLASS_MINIO }}" "MinIO"
+          update_storage_class "k8s/infrastructure/pulsar/pvc.yaml" "${{ env.STORAGE_CLASS_PULSAR }}" "Pulsar"
+
+          # Update any remaining PVC files with default storage class
+          echo ""
+          echo "🔍 Checking for other PVCs..."
+          find k8s/ -name "pvc.yaml" -o -name "*-pvc.yaml" | while read file; do
+            if grep -q "storageClassName: standard" "$file" 2>/dev/null; then
+              sed -i "s/storageClassName: standard/storageClassName: ${{ env.STORAGE_CLASS_DEFAULT }}/g" "$file"
+              echo "  ✅ $(basename $(dirname $file)) → ${{ env.STORAGE_CLASS_DEFAULT }} (default)"
+            fi
+          done
+          
+          echo ""
+          echo "✅ StorageClass configuration complete!"
 
       - name: Deploy to Kubernetes
         run: |
@@ -177,6 +232,41 @@ jobs:
               sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
             fi
           done
+
+      - name: Update StorageClass for Vultr (per application)
+        run: |
+          echo "🔧 Updating StorageClass per application..."
+          echo ""
+          
+          # Function to update storage class for a specific PVC file
+          update_storage_class() {
+            local file=$1
+            local storage_class=$2
+            local app_name=$3
+            if [ -f "$file" ]; then
+              sed -i "s/storageClassName: .*/storageClassName: $storage_class/g" "$file"
+              echo "  ✅ $app_name → $storage_class"
+            fi
+          }
+          
+          echo "📦 Infrastructure Storage:"
+          update_storage_class "k8s/infrastructure/postgres/pvc.yaml" "${{ env.STORAGE_CLASS_POSTGRES }}" "PostgreSQL"
+          update_storage_class "k8s/infrastructure/redis/pvc.yaml" "${{ env.STORAGE_CLASS_REDIS }}" "Redis"
+          update_storage_class "k8s/infrastructure/timescaledb/pvc.yaml" "${{ env.STORAGE_CLASS_TIMESCALEDB }}" "TimescaleDB"
+          update_storage_class "k8s/infrastructure/minio/pvc.yaml" "${{ env.STORAGE_CLASS_MINIO }}" "MinIO"
+          update_storage_class "k8s/infrastructure/pulsar/pvc.yaml" "${{ env.STORAGE_CLASS_PULSAR }}" "Pulsar"
+          
+          # Update any remaining PVC files with default storage class
+          echo ""
+          echo "🔍 Checking for other PVCs..."
+          find k8s/ -name "pvc.yaml" -o -name "*-pvc.yaml" | while read file; do
+            if grep -q "storageClassName: standard" "$file" 2>/dev/null; then
+              sed -i "s/storageClassName: standard/storageClassName: ${{ env.STORAGE_CLASS_DEFAULT }}/g" "$file"
+              echo "  ✅ $(basename $(dirname $file)) → ${{ env.STORAGE_CLASS_DEFAULT }} (default)"
+            fi
+          done
+          
+          echo "✅ StorageClass configuration complete!"
 
       - name: Deploy to Kubernetes
         run: |
