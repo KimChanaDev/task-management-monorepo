@@ -43,14 +43,14 @@ env:
   #   - vultr-block-storage-hdd-retain : HDD, Retain policy
   #
   # Recommendations:
-  #   - SSD: databases requiring fast I/O (postgres, redis, timescaledb)
-  #   - HDD: large storage, less I/O intensive (minio, logs, backups)
+  #   - SSD: databases requiring fast I/O
+  #   - HDD: large storage, less I/O intensive (Vultr said size must be between 40GB and 40000GB per volume)
   # ===========================================
   STORAGE_CLASS_POSTGRES: vultr-block-storage       # Main database - SSD for performance
   STORAGE_CLASS_REDIS: vultr-block-storage          # Cache - SSD for speed
   STORAGE_CLASS_TIMESCALEDB: vultr-block-storage    # Time-series DB - SSD
-  STORAGE_CLASS_MINIO: vultr-block-storage-hdd      # File storage - HDD to save cost
-  STORAGE_CLASS_PULSAR: vultr-block-storage-hdd     # Message queue - HDD
+  STORAGE_CLASS_MINIO: vultr-block-storage          # File storage - SSD
+  STORAGE_CLASS_PULSAR: vultr-block-storage         # Message queue - SSD
   STORAGE_CLASS_DEFAULT: vultr-block-storage        # Fallback for any other PVCs
 
 jobs:
