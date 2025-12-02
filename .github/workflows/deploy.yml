@@ -82,6 +82,77 @@ jobs:
           kubectl cluster-info
           kubectl get nodes
 
+      - name: Create Kubernetes Secrets
+        run: |
+          echo "🔐 Creating Kubernetes Secrets from GitHub Secrets..."
+          
+          # ===========================================
+          # Infrastructure Secrets
+          # ===========================================
+          
+          # PostgreSQL Secret
+          echo "  📦 Creating postgres-secret..."
+          kubectl create secret generic postgres-secret \
+            --namespace=task-platform-infra \
+            --from-literal=username=${{ secrets.POSTGRES_USER }} \
+            --from-literal=password=${{ secrets.POSTGRES_PASSWORD }} \
+            --from-literal=database=${{ secrets.POSTGRES_DB }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # TimescaleDB Secret
+          echo "  📦 Creating timescaledb-secret..."
+          kubectl create secret generic timescaledb-secret \
+            --namespace=task-platform-infra \
+            --from-literal=username=${{ secrets.TIMESCALEDB_USER }} \
+            --from-literal=password=${{ secrets.TIMESCALEDB_PASSWORD }} \
+            --from-literal=database=${{ secrets.TIMESCALEDB_DB }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # MinIO Secret
+          echo "  📦 Creating minio-secret..."
+          kubectl create secret generic minio-secret \
+            --namespace=task-platform-infra \
+            --from-literal=root-user=${{ secrets.MINIO_ROOT_USER }} \
+            --from-literal=root-password=${{ secrets.MINIO_ROOT_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # ===========================================
+          # Application Secrets
+          # ===========================================
+          
+          # Auth Service Secret
+          echo "  🔧 Creating auth-service-secret..."
+          kubectl create secret generic auth-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=auth" \
+            --from-literal=jwt-secret=${{ secrets.JWT_SECRET }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Task Service Secret
+          echo "  🔧 Creating task-service-secret..."
+          kubectl create secret generic task-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=task" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Analytics Service Secret
+          echo "  🔧 Creating analytics-service-secret..."
+          kubectl create secret generic analytics-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.TIMESCALEDB_USER }}:${{ secrets.TIMESCALEDB_PASSWORD }}@timescaledb.task-platform-infra.svc.cluster.local:5432/${{ secrets.TIMESCALEDB_DB }}?schema=analytics" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # File Service Secret
+          echo "  🔧 Creating file-service-secret..."
+          kubectl create secret generic file-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=file" \
+            --from-literal=minio-access-key=${{ secrets.MINIO_ROOT_USER }} \
+            --from-literal=minio-secret-key=${{ secrets.MINIO_ROOT_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "✅ All secrets created successfully!"
+
       - name: Update image tags in manifests
         run: |
           IMAGE_TAG="${{ github.event.inputs.image_tag }}"
@@ -215,6 +286,77 @@ jobs:
           echo "🔗 Connecting to Vultr Kubernetes cluster..."
           kubectl cluster-info
           kubectl get nodes
+
+      - name: Create Kubernetes Secrets
+        run: |
+          echo "🔐 Creating Kubernetes Secrets from GitHub Secrets..."
+          
+          # ===========================================
+          # Infrastructure Secrets
+          # ===========================================
+          
+          # PostgreSQL Secret
+          echo "  📦 Creating postgres-secret..."
+          kubectl create secret generic postgres-secret \
+            --namespace=task-platform-infra \
+            --from-literal=username=${{ secrets.POSTGRES_USER }} \
+            --from-literal=password=${{ secrets.POSTGRES_PASSWORD }} \
+            --from-literal=database=${{ secrets.POSTGRES_DB }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # TimescaleDB Secret
+          echo "  📦 Creating timescaledb-secret..."
+          kubectl create secret generic timescaledb-secret \
+            --namespace=task-platform-infra \
+            --from-literal=username=${{ secrets.TIMESCALEDB_USER }} \
+            --from-literal=password=${{ secrets.TIMESCALEDB_PASSWORD }} \
+            --from-literal=database=${{ secrets.TIMESCALEDB_DB }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # MinIO Secret
+          echo "  📦 Creating minio-secret..."
+          kubectl create secret generic minio-secret \
+            --namespace=task-platform-infra \
+            --from-literal=root-user=${{ secrets.MINIO_ROOT_USER }} \
+            --from-literal=root-password=${{ secrets.MINIO_ROOT_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # ===========================================
+          # Application Secrets
+          # ===========================================
+          
+          # Auth Service Secret
+          echo "  🔧 Creating auth-service-secret..."
+          kubectl create secret generic auth-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=auth" \
+            --from-literal=jwt-secret=${{ secrets.JWT_SECRET }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Task Service Secret
+          echo "  🔧 Creating task-service-secret..."
+          kubectl create secret generic task-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=task" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Analytics Service Secret
+          echo "  🔧 Creating analytics-service-secret..."
+          kubectl create secret generic analytics-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.TIMESCALEDB_USER }}:${{ secrets.TIMESCALEDB_PASSWORD }}@timescaledb.task-platform-infra.svc.cluster.local:5432/${{ secrets.TIMESCALEDB_DB }}?schema=analytics" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # File Service Secret
+          echo "  🔧 Creating file-service-secret..."
+          kubectl create secret generic file-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=file" \
+            --from-literal=minio-access-key=${{ secrets.MINIO_ROOT_USER }} \
+            --from-literal=minio-secret-key=${{ secrets.MINIO_ROOT_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          echo "✅ All secrets created successfully!"
 
       - name: Update image tags in manifests
         run: |
