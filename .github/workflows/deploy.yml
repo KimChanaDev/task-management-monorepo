@@ -31,7 +31,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/task-platform
   VULTR_CLUSTER_REGION: sgp  # Singapore datacenter
   # ===========================================
   # Storage Class Configuration
@@ -65,6 +64,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Set lowercase image prefix
+        id: image
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "prefix=${OWNER_LC}/task-platform" >> $GITHUB_OUTPUT
+          echo "📦 Image prefix: ${OWNER_LC}/task-platform"
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
@@ -157,6 +163,7 @@ jobs:
         run: |
           IMAGE_TAG="${{ github.event.inputs.image_tag }}"
           SERVICE="${{ github.event.inputs.service }}"
+          IMAGE_PREFIX="${{ steps.image.outputs.prefix }}"
 
           if [ "$SERVICE" == "all" ]; then
             SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
@@ -166,7 +173,7 @@ jobs:
 
           for svc in $SERVICES; do
             if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
-              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
+              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${IMAGE_PREFIX}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
             fi
           done
 
@@ -271,6 +278,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Set lowercase image prefix
+        id: image
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "prefix=${OWNER_LC}/task-platform" >> $GITHUB_OUTPUT
+          echo "📦 Image prefix: ${OWNER_LC}/task-platform"
+
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
         with:
@@ -362,6 +376,7 @@ jobs:
         run: |
           IMAGE_TAG="${{ github.event.inputs.image_tag }}"
           SERVICE="${{ github.event.inputs.service }}"
+          IMAGE_PREFIX="${{ steps.image.outputs.prefix }}"
 
           if [ "$SERVICE" == "all" ]; then
             SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
@@ -371,7 +386,7 @@ jobs:
 
           for svc in $SERVICES; do
             if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
-              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
+              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${IMAGE_PREFIX}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
             fi
           done
 
