@@ -83,23 +83,22 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           SERVICE="${{ github.event.inputs.service }}"
-          NAMESPACE="task-platform-staging"
 
           # Apply namespace
           kubectl apply -f k8s/namespaces/
 
           if [ "$SERVICE" == "all" ]; then
             # Deploy infrastructure first
-            kubectl apply -f k8s/infrastructure/ -n $NAMESPACE --recursive || true
+            kubectl apply -f k8s/infrastructure/ --recursive || true
             
             # Deploy all apps
-            kubectl apply -f k8s/apps/ -n $NAMESPACE --recursive
+            kubectl apply -f k8s/apps/ --recursive
             
             # Apply ingress
-            kubectl apply -f k8s/ingress/ -n $NAMESPACE
+            kubectl apply -f k8s/ingress/
           else
             # Deploy specific service
-            kubectl apply -f k8s/apps/$SERVICE/ -n $NAMESPACE --recursive
+            kubectl apply -f k8s/apps/$SERVICE/ --recursive
           fi
 
       - name: Verify deployment
@@ -108,9 +107,9 @@ jobs:
           SERVICE="${{ github.event.inputs.service }}"
 
           if [ "$SERVICE" == "all" ]; then
-            kubectl rollout status deployment -n $NAMESPACE --timeout=300s
+            kubectl rollout status deployment --timeout=300s
           else
-            kubectl rollout status deployment/$SERVICE -n $NAMESPACE --timeout=300s
+            kubectl rollout status deployment/$SERVICE --timeout=300s
           fi
 
       - name: Send deployment notification
@@ -182,26 +181,25 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           SERVICE="${{ github.event.inputs.service }}"
-          NAMESPACE="task-platform"
 
           # Apply namespace
           kubectl apply -f k8s/namespaces/
 
           if [ "$SERVICE" == "all" ]; then
             # Deploy infrastructure first
-            kubectl apply -f k8s/infrastructure/ -n $NAMESPACE --recursive || true
+            kubectl apply -f k8s/infrastructure/ --recursive || true
             
             # Deploy all apps
-            kubectl apply -f k8s/apps/ -n $NAMESPACE --recursive
+            kubectl apply -f k8s/apps/ --recursive
             
             # Apply ingress
-            kubectl apply -f k8s/ingress/ -n $NAMESPACE
+            kubectl apply -f k8s/ingress/
             
             # Apply HPA
-            kubectl apply -f k8s/apps/hpa.yaml -n $NAMESPACE
+            kubectl apply -f k8s/apps/hpa.yaml
           else
             # Deploy specific service
-            kubectl apply -f k8s/apps/$SERVICE/ -n $NAMESPACE --recursive
+            kubectl apply -f k8s/apps/$SERVICE/ --recursive
           fi
 
       - name: Verify deployment
@@ -210,9 +208,9 @@ jobs:
           SERVICE="${{ github.event.inputs.service }}"
 
           if [ "$SERVICE" == "all" ]; then
-            kubectl rollout status deployment -n $NAMESPACE --timeout=300s
+            kubectl rollout status deployment --timeout=300s
           else
-            kubectl rollout status deployment/$SERVICE -n $NAMESPACE --timeout=300s
+            kubectl rollout status deployment/$SERVICE --timeout=300s
           fi
 
       - name: Send deployment notification
