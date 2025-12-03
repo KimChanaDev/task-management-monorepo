@@ -83,11 +83,11 @@ spec:
                 name: graphql-gateway-config
           resources:
             requests:
-              memory: "64Mi"
-              cpu: "50m"
+              memory: "256Mi"
+              cpu: "250m"
             limits:
-              memory: "128Mi"
-              cpu: "100m"
+              memory: "512Mi"
+              cpu: "500m"
           readinessProbe:
             httpGet:
               path: /healthcheck
