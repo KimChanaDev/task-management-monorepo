@@ -95,7 +95,10 @@ jobs:
           # ===========================================
           # Infrastructure Secrets
           # ===========================================
-          
+
+          # Apply namespace
+          kubectl apply -f k8s/namespaces/
+
           # PostgreSQL Secret
           echo "  📦 Creating postgres-secret..."
           kubectl create secret generic postgres-secret \
@@ -216,9 +219,6 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           SERVICE="${{ github.event.inputs.service }}"
-
-          # Apply namespace
-          kubectl apply -f k8s/namespaces/
 
           if [ "$SERVICE" == "all" ]; then
             # Deploy infrastructure first
@@ -309,6 +309,9 @@ jobs:
           # Infrastructure Secrets
           # ===========================================
           
+          # Apply namespace
+          kubectl apply -f k8s/namespaces/
+
           # PostgreSQL Secret
           echo "  📦 Creating postgres-secret..."
           kubectl create secret generic postgres-secret \
@@ -428,9 +431,6 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           SERVICE="${{ github.event.inputs.service }}"
-
-          # Apply namespace
-          kubectl apply -f k8s/namespaces/
 
           if [ "$SERVICE" == "all" ]; then
             # Deploy infrastructure first
