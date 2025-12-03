@@ -234,6 +234,23 @@ jobs:
           echo ""
           echo "✅ StorageClass configuration complete!"
 
+      - name: Update Ingress host domain
+        run: |
+          echo "🌐 Updating Ingress host domain..."
+          DOMAIN="${{ secrets.DOMAIN_NAME }}"
+          
+          if [ -z "$DOMAIN" ]; then
+            echo "⚠️ DOMAIN_NAME secret not set, using default"
+            DOMAIN="task-platform.local"
+          fi
+          
+          # Update main ingress host
+          sed -i "s/host: task-platform.local/host: $DOMAIN/g" k8s/ingress/ingress.yaml
+          sed -i "s/host: api.task-platform.local/host: api.$DOMAIN/g" k8s/ingress/ingress.yaml
+          
+          echo "  ✅ Main domain: $DOMAIN"
+          echo "  ✅ API domain: api.$DOMAIN"
+
       - name: Deploy to Kubernetes
         run: |
           SERVICE="${{ github.event.inputs.service }}"
@@ -463,6 +480,23 @@ jobs:
           done
           
           echo "✅ StorageClass configuration complete!"
+
+      - name: Update Ingress host domain
+        run: |
+          echo "🌐 Updating Ingress host domain..."
+          DOMAIN="${{ secrets.DOMAIN_NAME }}"
+          
+          if [ -z "$DOMAIN" ]; then
+            echo "⚠️ DOMAIN_NAME secret not set, using default"
+            DOMAIN="task-platform.local"
+          fi
+          
+          # Update main ingress host
+          sed -i "s/host: task-platform.local/host: $DOMAIN/g" k8s/ingress/ingress.yaml
+          sed -i "s/host: api.task-platform.local/host: api.$DOMAIN/g" k8s/ingress/ingress.yaml
+          
+          echo "  ✅ Main domain: $DOMAIN"
+          echo "  ✅ API domain: api.$DOMAIN"
 
       - name: Deploy to Kubernetes
         run: |
