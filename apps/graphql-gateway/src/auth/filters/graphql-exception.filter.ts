@@ -10,7 +10,9 @@ export class GraphQLExceptionFilter implements GqlExceptionFilter {
     }
 
     if (exception instanceof HttpException) {
-      const response: string | object = (exception as HttpException).getResponse();
+      const response: string | object = (
+        exception as HttpException
+      ).getResponse();
       const status = (exception as HttpException).getStatus();
       let message = (exception as HttpException).message;
       let validationErrors: any[] = [];
