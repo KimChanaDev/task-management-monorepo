@@ -1,0 +1,105 @@
+name: Deploy to Vultr Kubernetes (New)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      service:
+        description: 'Service to deploy (or "all" for all services)'
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - auth-service
+          - task-service
+          - analytics-service
+          - notification-service
+          - file-service
+          - graphql-gateway
+          - svelte-web
+      image_tag:
+        description: "Docker image tag to deploy (default: main)"
+        required: false
+        default: "main"
+      protocol:
+        description: "Protocol for URLs (https for production, http for local)"
+        required: true
+        type: choice
+        options:
+          - https
+          - http
+        default: https
+      secure_cookies:
+        description: "Enable secure cookies (true for https, false for http)"
+        required: true
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "true"
+
+jobs:
+  # ===========================================
+  # Deploy to Staging
+  # ===========================================
+  deploy-staging:
+    name: Deploy to Staging
+    if: github.event.inputs.environment == 'staging'
+    uses: ./.github/workflows/deploy-step.yml
+    with:
+      environment: staging
+      service: ${{ github.event.inputs.service }}
+      image_tag: ${{ github.event.inputs.image_tag }}
+      kubectl_version: "v1.34.1"
+      apply_hpa: false
+      protocol: ${{ github.event.inputs.protocol }}
+      secure_cookies: ${{ github.event.inputs.secure_cookies }}
+    secrets:
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG_STAGING }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      TIMESCALEDB_USER: ${{ secrets.TIMESCALEDB_USER }}
+      TIMESCALEDB_PASSWORD: ${{ secrets.TIMESCALEDB_PASSWORD }}
+      TIMESCALEDB_DB: ${{ secrets.TIMESCALEDB_DB }}
+      MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+      MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ===========================================
+  # Deploy to Production
+  # ===========================================
+  deploy-production:
+    name: Deploy to Production
+    if: github.event.inputs.environment == 'production'
+    uses: ./.github/workflows/deploy-step.yml
+    with:
+      environment: production
+      service: ${{ github.event.inputs.service }}
+      image_tag: ${{ github.event.inputs.image_tag }}
+      kubectl_version: "v1.29.0"
+      apply_hpa: true
+      protocol: ${{ github.event.inputs.protocol }}
+      secure_cookies: ${{ github.event.inputs.secure_cookies }}
+    secrets:
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      TIMESCALEDB_USER: ${{ secrets.TIMESCALEDB_USER }}
+      TIMESCALEDB_PASSWORD: ${{ secrets.TIMESCALEDB_PASSWORD }}
+      TIMESCALEDB_DB: ${{ secrets.TIMESCALEDB_DB }}
+      MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+      MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

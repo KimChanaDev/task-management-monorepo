@@ -1,0 +1,305 @@
+name: Reusable Deploy Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: string
+      service:
+        description: "Service to deploy"
+        required: true
+        type: string
+      image_tag:
+        description: "Docker image tag"
+        required: true
+        type: string
+      kubectl_version:
+        description: "kubectl version"
+        required: false
+        type: string
+        default: "v1.29.0"
+      apply_hpa:
+        description: "Apply HPA (production only)"
+        required: false
+        type: boolean
+        default: false
+      protocol:
+        description: "Protocol for URLs (https/http)"
+        required: false
+        type: string
+        default: "https"
+      secure_cookies:
+        description: "Enable secure cookies"
+        required: false
+        type: string
+        default: "true"
+    secrets:
+      KUBE_CONFIG:
+        required: true
+      POSTGRES_USER:
+        required: true
+      POSTGRES_PASSWORD:
+        required: true
+      POSTGRES_DB:
+        required: true
+      TIMESCALEDB_USER:
+        required: true
+      TIMESCALEDB_PASSWORD:
+        required: true
+      TIMESCALEDB_DB:
+        required: true
+      MINIO_ROOT_USER:
+        required: true
+      MINIO_ROOT_PASSWORD:
+        required: true
+      JWT_SECRET:
+        required: true
+      DOMAIN_NAME:
+        required: false
+      SLACK_WEBHOOK_URL:
+        required: false
+
+env:
+  REGISTRY: ghcr.io
+  # Storage Class Configuration
+  STORAGE_CLASS_POSTGRES: vultr-block-storage
+  STORAGE_CLASS_REDIS: vultr-block-storage
+  STORAGE_CLASS_TIMESCALEDB: vultr-block-storage
+  STORAGE_CLASS_MINIO: vultr-block-storage
+  STORAGE_CLASS_PULSAR: vultr-block-storage
+  STORAGE_CLASS_DEFAULT: vultr-block-storage
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set lowercase image prefix
+        id: image
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "prefix=${OWNER_LC}/task-platform" >> $GITHUB_OUTPUT
+          echo "📦 Image prefix: ${OWNER_LC}/task-platform"
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ inputs.kubectl_version }}
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+          echo "🔗 Connecting to Kubernetes cluster..."
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Create Kubernetes Secrets
+        run: |
+          echo "🔐 Creating Kubernetes Secrets..."
+
+          # Apply namespaces
+          kubectl apply -f k8s/namespaces/
+
+          # Infrastructure Secrets
+          echo "  📦 Creating infrastructure secrets..."
+          kubectl create secret generic postgres-secret \
+            --namespace=task-platform-infra \
+            --from-literal=username=${{ secrets.POSTGRES_USER }} \
+            --from-literal=password=${{ secrets.POSTGRES_PASSWORD }} \
+            --from-literal=database=${{ secrets.POSTGRES_DB }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic timescaledb-secret \
+            --namespace=task-platform-infra \
+            --from-literal=username=${{ secrets.TIMESCALEDB_USER }} \
+            --from-literal=password=${{ secrets.TIMESCALEDB_PASSWORD }} \
+            --from-literal=database=${{ secrets.TIMESCALEDB_DB }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic minio-secret \
+            --namespace=task-platform-infra \
+            --from-literal=root-user=${{ secrets.MINIO_ROOT_USER }} \
+            --from-literal=root-password=${{ secrets.MINIO_ROOT_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          # Application Secrets
+          echo "  🔧 Creating application secrets..."
+          kubectl create secret generic auth-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=auth" \
+            --from-literal=jwt-secret=${{ secrets.JWT_SECRET }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic task-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=task" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic analytics-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.TIMESCALEDB_USER }}:${{ secrets.TIMESCALEDB_PASSWORD }}@timescaledb.task-platform-infra.svc.cluster.local:5432/${{ secrets.TIMESCALEDB_DB }}?schema=analytics" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic file-service-secret \
+            --namespace=task-platform-apps \
+            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=file" \
+            --from-literal=minio-access-key=${{ secrets.MINIO_ROOT_USER }} \
+            --from-literal=minio-secret-key=${{ secrets.MINIO_ROOT_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "✅ All secrets created!"
+
+      - name: Update manifests
+        run: |
+          SERVICE="${{ inputs.service }}"
+          IMAGE_TAG="${{ inputs.image_tag }}"
+          IMAGE_PREFIX="${{ steps.image.outputs.prefix }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
+          else
+            SERVICES="$SERVICE"
+          fi
+
+          echo "🔄 Updating image tags and pull policy..."
+          for svc in $SERVICES; do
+            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
+              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${IMAGE_PREFIX}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
+              sed -i "s|imagePullPolicy: .*|imagePullPolicy: Always|g" k8s/apps/$svc/deployment.yaml
+              echo "  ✅ $svc"
+            fi
+          done
+
+      - name: Update StorageClass
+        run: |
+          echo "🔧 Updating StorageClass..."
+
+          update_storage_class() {
+            local file=$1
+            local storage_class=$2
+            local app_name=$3
+            if [ -f "$file" ]; then
+              sed -i "s/storageClassName: .*/storageClassName: $storage_class/g" "$file"
+              echo "  ✅ $app_name → $storage_class"
+            fi
+          }
+
+          update_storage_class "k8s/infrastructure/postgres/pvc.yaml" "${{ env.STORAGE_CLASS_POSTGRES }}" "PostgreSQL"
+          update_storage_class "k8s/infrastructure/redis/pvc.yaml" "${{ env.STORAGE_CLASS_REDIS }}" "Redis"
+          update_storage_class "k8s/infrastructure/timescaledb/pvc.yaml" "${{ env.STORAGE_CLASS_TIMESCALEDB }}" "TimescaleDB"
+          update_storage_class "k8s/infrastructure/minio/pvc.yaml" "${{ env.STORAGE_CLASS_MINIO }}" "MinIO"
+          update_storage_class "k8s/infrastructure/pulsar/pvc.yaml" "${{ env.STORAGE_CLASS_PULSAR }}" "Pulsar"
+
+          # Update remaining PVCs
+          find k8s/ -name "pvc.yaml" -o -name "*-pvc.yaml" | while read file; do
+            if grep -q "storageClassName: standard" "$file" 2>/dev/null; then
+              sed -i "s/storageClassName: standard/storageClassName: ${{ env.STORAGE_CLASS_DEFAULT }}/g" "$file"
+              echo "  ✅ Updated StorageClass to default(${{ env.STORAGE_CLASS_DEFAULT }}) in $file"
+            fi
+          done
+
+      - name: Update Ingress domain and ConfigMaps
+        run: |
+          echo "🌐 Updating Ingress domain and ConfigMaps..."
+          DOMAIN="${{ secrets.DOMAIN_NAME }}"
+          PROTOCOL="${{ inputs.protocol }}"
+          SECURE_COOKIES="${{ inputs.secure_cookies }}"
+
+          if [ -z "$DOMAIN" ]; then
+            DOMAIN="task-platform.local"
+          fi
+
+          # Determine WebSocket protocol based on HTTP protocol
+          if [ "$PROTOCOL" == "https" ]; then
+            WS_PROTOCOL="wss"
+          else
+            WS_PROTOCOL="ws"
+          fi
+
+          echo "📍 Domain: $DOMAIN"
+          echo "📍 Protocol: $PROTOCOL (WebSocket: $WS_PROTOCOL)"
+          echo "📍 Secure Cookies: $SECURE_COOKIES"
+
+          # Update Ingress
+          sed -i "s/host: .*/host: $DOMAIN/g" k8s/ingress/ingress.yaml
+          if grep -q "api\." k8s/ingress/ingress.yaml; then
+            sed -i "s/host: api\..*/host: api.$DOMAIN/g" k8s/ingress/ingress.yaml
+          fi
+          echo "  ✅ Ingress → $DOMAIN"
+
+          # Update Svelte Web ConfigMap
+          if [ -f "k8s/apps/svelte-web/configmap.yaml" ]; then
+            sed -i "s|PUBLIC_GRAPHQL_GATWAY_URL: .*|PUBLIC_GRAPHQL_GATWAY_URL: \"$PROTOCOL://$DOMAIN\"|g" k8s/apps/svelte-web/configmap.yaml
+            sed -i "s|PUBLIC_NOTIFICATION_WS_URL: .*|PUBLIC_NOTIFICATION_WS_URL: \"$WS_PROTOCOL://$DOMAIN\"|g" k8s/apps/svelte-web/configmap.yaml
+            sed -i "s|PUBLIC_AUTH_SECURE_COOKIES: .*|PUBLIC_AUTH_SECURE_COOKIES: \"$SECURE_COOKIES\"|g" k8s/apps/svelte-web/configmap.yaml
+            echo "  ✅ svelte-web configmap updated"
+          fi
+
+          # Update Notification Service ConfigMap
+          if [ -f "k8s/apps/notification-service/configmap.yaml" ]; then
+            sed -i "s|CLIENT_URL: .*|CLIENT_URL: \"$PROTOCOL://$DOMAIN\"|g" k8s/apps/notification-service/configmap.yaml
+            echo "  ✅ notification-service configmap updated"
+          fi
+
+          # Update GraphQL Gateway ConfigMap
+          if [ -f "k8s/apps/graphql-gateway/configmap.yaml" ]; then
+            sed -i "s|CLIENT_URL: .*|CLIENT_URL: \"$PROTOCOL://$DOMAIN\"|g" k8s/apps/graphql-gateway/configmap.yaml
+            sed -i "s|AUTH_SECURE_COOKIES: .*|AUTH_SECURE_COOKIES: \"$SECURE_COOKIES\"|g" k8s/apps/graphql-gateway/configmap.yaml
+            echo "  ✅ graphql-gateway configmap updated"
+          fi
+
+      - name: Deploy to Kubernetes
+        run: |
+          SERVICE="${{ inputs.service }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            kubectl apply -f k8s/infrastructure/ --recursive || true
+            kubectl apply -f k8s/apps/ --recursive
+            kubectl apply -f k8s/ingress/
+            
+            if [ "${{ inputs.apply_hpa }}" == "true" ]; then
+              kubectl apply -f k8s/apps/hpa.yaml
+            fi
+          else
+            kubectl apply -f k8s/apps/$SERVICE/ --recursive
+          fi
+
+      - name: Verify deployment
+        run: |
+          SERVICE="${{ inputs.service }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            kubectl rollout status deployment --timeout=300s
+          else
+            kubectl rollout status deployment/$SERVICE --timeout=300s
+          fi
+
+      - name: Send notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "${{ inputs.environment }} Deployment: ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚀 ${{ inputs.environment }} Deployment*\n*Status:* ${{ job.status }}\n*Service:* ${{ inputs.service }}\n*Tag:* ${{ inputs.image_tag }}\n*Actor:* ${{ github.actor }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true

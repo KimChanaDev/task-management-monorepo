@@ -1,0 +1,214 @@
+name: Update Domain Configuration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      domain:
+        description: "New domain (e.g., example.com) - leave empty to use DOMAIN_NAME secret"
+        required: false
+        type: string
+      protocol:
+        description: "Protocol for URLs"
+        required: true
+        type: choice
+        options:
+          - https
+          - http
+        default: https
+      secure_cookies:
+        description: "Enable secure cookies (true for https, false for http)"
+        required: true
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "true"
+
+jobs:
+  update-domain:
+    name: Update Domain - ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.29.0"
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+            echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+          else
+            echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+          fi
+          chmod 600 $HOME/.kube/config
+
+          echo "🔗 Connecting to Kubernetes cluster..."
+          kubectl cluster-info
+
+      - name: Determine domain and protocol
+        id: config
+        run: |
+          # Use input domain if provided, otherwise use secret
+          if [ -n "${{ github.event.inputs.domain }}" ]; then
+            DOMAIN="${{ github.event.inputs.domain }}"
+          elif [ -n "${{ secrets.DOMAIN_NAME }}" ]; then
+            DOMAIN="${{ secrets.DOMAIN_NAME }}"
+          else
+            echo "❌ No domain provided and DOMAIN_NAME secret not set!"
+            exit 1
+          fi
+
+          PROTOCOL="${{ github.event.inputs.protocol }}"
+          SECURE_COOKIES="${{ github.event.inputs.secure_cookies }}"
+
+          # Determine WebSocket protocol based on HTTP protocol
+          if [ "$PROTOCOL" == "https" ]; then
+            WS_PROTOCOL="wss"
+          else
+            WS_PROTOCOL="ws"
+          fi
+
+          echo "domain=$DOMAIN" >> $GITHUB_OUTPUT
+          echo "protocol=$PROTOCOL" >> $GITHUB_OUTPUT
+          echo "ws_protocol=$WS_PROTOCOL" >> $GITHUB_OUTPUT
+          echo "secure_cookies=$SECURE_COOKIES" >> $GITHUB_OUTPUT
+
+          echo "📍 Domain: $DOMAIN"
+          echo "📍 Protocol: $PROTOCOL"
+          echo "📍 WebSocket: $WS_PROTOCOL"
+          echo "📍 Secure Cookies: $SECURE_COOKIES"
+
+      - name: Update Ingress domain
+        run: |
+          DOMAIN="${{ steps.config.outputs.domain }}"
+          echo "🌐 Updating Ingress host domain..."
+
+          # Update ingress hosts
+          sed -i "s/host: .*/host: $DOMAIN/g" k8s/ingress/ingress.yaml
+
+          # Also handle api subdomain if exists
+          if grep -q "api\." k8s/ingress/ingress.yaml; then
+            sed -i "s/host: api\..*/host: api.$DOMAIN/g" k8s/ingress/ingress.yaml
+          fi
+
+          echo "  ✅ Ingress → $DOMAIN"
+
+      - name: Update ConfigMaps
+        run: |
+          DOMAIN="${{ steps.config.outputs.domain }}"
+          PROTOCOL="${{ steps.config.outputs.protocol }}"
+          WS_PROTOCOL="${{ steps.config.outputs.ws_protocol }}"
+          SECURE_COOKIES="${{ steps.config.outputs.secure_cookies }}"
+
+          echo "📝 Updating ConfigMaps..."
+
+          # Svelte Web ConfigMap
+          if [ -f "k8s/apps/svelte-web/configmap.yaml" ]; then
+            sed -i "s|PUBLIC_GRAPHQL_GATWAY_URL: .*|PUBLIC_GRAPHQL_GATWAY_URL: \"$PROTOCOL://$DOMAIN\"|g" k8s/apps/svelte-web/configmap.yaml
+            sed -i "s|PUBLIC_NOTIFICATION_WS_URL: .*|PUBLIC_NOTIFICATION_WS_URL: \"$WS_PROTOCOL://$DOMAIN\"|g" k8s/apps/svelte-web/configmap.yaml
+            sed -i "s|PUBLIC_AUTH_SECURE_COOKIES: .*|PUBLIC_AUTH_SECURE_COOKIES: \"$SECURE_COOKIES\"|g" k8s/apps/svelte-web/configmap.yaml
+            echo "  ✅ svelte-web configmap updated"
+            echo "     - PUBLIC_GRAPHQL_GATWAY_URL: $PROTOCOL://$DOMAIN"
+            echo "     - PUBLIC_NOTIFICATION_WS_URL: $WS_PROTOCOL://$DOMAIN"
+            echo "     - PUBLIC_AUTH_SECURE_COOKIES: $SECURE_COOKIES"
+          fi
+
+          # Notification Service ConfigMap
+          if [ -f "k8s/apps/notification-service/configmap.yaml" ]; then
+            sed -i "s|CLIENT_URL: .*|CLIENT_URL: \"$PROTOCOL://$DOMAIN\"|g" k8s/apps/notification-service/configmap.yaml
+            echo "  ✅ notification-service configmap updated"
+            echo "     - CLIENT_URL: $PROTOCOL://$DOMAIN"
+          fi
+
+          # GraphQL Gateway ConfigMap
+          if [ -f "k8s/apps/graphql-gateway/configmap.yaml" ]; then
+            sed -i "s|CLIENT_URL: .*|CLIENT_URL: \"$PROTOCOL://$DOMAIN\"|g" k8s/apps/graphql-gateway/configmap.yaml
+            sed -i "s|AUTH_SECURE_COOKIES: .*|AUTH_SECURE_COOKIES: \"$SECURE_COOKIES\"|g" k8s/apps/graphql-gateway/configmap.yaml
+            echo "  ✅ graphql-gateway configmap updated"
+            echo "     - CLIENT_URL: $PROTOCOL://$DOMAIN"
+            echo "     - AUTH_SECURE_COOKIES: $SECURE_COOKIES"
+          fi
+
+      - name: Apply updated manifests
+        run: |
+          echo "📦 Applying updated manifests..."
+
+          # Apply Ingress
+          kubectl apply -f k8s/ingress/ingress.yaml
+          echo "  ✅ Ingress applied"
+
+          # Apply ConfigMaps
+          kubectl apply -f k8s/apps/svelte-web/configmap.yaml
+          kubectl apply -f k8s/apps/notification-service/configmap.yaml
+          kubectl apply -f k8s/apps/graphql-gateway/configmap.yaml
+          echo "  ✅ ConfigMaps applied"
+
+      - name: Restart deployments to apply new ConfigMaps
+        run: |
+          echo "🔄 Restarting deployments to apply new ConfigMaps..."
+          NAMESPACE="task-platform-apps"
+
+          # Restart each deployment
+          kubectl rollout restart deployment/svelte-web -n $NAMESPACE
+          echo "  ✅ svelte-web restarting..."
+
+          kubectl rollout restart deployment/notification-service -n $NAMESPACE
+          echo "  ✅ notification-service restarting..."
+
+          kubectl rollout restart deployment/graphql-gateway -n $NAMESPACE
+          echo "  ✅ graphql-gateway restarting..."
+
+      - name: Wait for rollouts to complete
+        run: |
+          echo "⏳ Waiting for rollouts to complete..."
+          NAMESPACE="task-platform-apps"
+
+          kubectl rollout status deployment/svelte-web -n $NAMESPACE --timeout=120s
+          echo "  ✅ svelte-web ready"
+
+          kubectl rollout status deployment/notification-service -n $NAMESPACE --timeout=120s
+          echo "  ✅ notification-service ready"
+
+          kubectl rollout status deployment/graphql-gateway -n $NAMESPACE --timeout=120s
+          echo "  ✅ graphql-gateway ready"
+
+      - name: Summary
+        run: |
+          DOMAIN="${{ steps.config.outputs.domain }}"
+          PROTOCOL="${{ steps.config.outputs.protocol }}"
+          WS_PROTOCOL="${{ steps.config.outputs.ws_protocol }}"
+          SECURE_COOKIES="${{ steps.config.outputs.secure_cookies }}"
+
+          echo ""
+          echo "============================================"
+          echo "✅ Domain Update Complete!"
+          echo "============================================"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Domain: $DOMAIN"
+          echo "Protocol: $PROTOCOL (WebSocket: $WS_PROTOCOL)"
+          echo "Secure Cookies: $SECURE_COOKIES"
+          echo ""
+          echo "Updated resources:"
+          echo "  • Ingress: $DOMAIN"
+          echo "  • svelte-web ConfigMap"
+          echo "  • notification-service ConfigMap"
+          echo "  • graphql-gateway ConfigMap"
+          echo ""
+          echo "Restarted deployments:""
+          echo "  • svelte-web"
+          echo "  • notification-service"
+          echo "  • graphql-gateway"
+          echo "============================================"
