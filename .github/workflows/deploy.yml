@@ -180,6 +180,24 @@ jobs:
             fi
           done
 
+      - name: Update imagePullPolicy for cloud deployment
+        run: |
+          echo "🔄 Updating imagePullPolicy to Always..."
+          SERVICE="${{ github.event.inputs.service }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
+          else
+            SERVICES="$SERVICE"
+          fi
+
+          for svc in $SERVICES; do
+            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
+              sed -i "s|imagePullPolicy: .*|imagePullPolicy: Always|g" k8s/apps/$svc/deployment.yaml
+              echo "  ✅ $svc → imagePullPolicy: Always"
+            fi
+          done
+
       - name: Update StorageClass for Vultr (per application)
         run: |
           echo "🔧 Updating StorageClass per application..."
@@ -390,6 +408,24 @@ jobs:
           for svc in $SERVICES; do
             if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
               sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${IMAGE_PREFIX}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
+            fi
+          done
+
+      - name: Update imagePullPolicy for cloud deployment
+        run: |
+          echo "🔄 Updating imagePullPolicy to Always..."
+          SERVICE="${{ github.event.inputs.service }}"
+
+          if [ "$SERVICE" == "all" ]; then
+            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
+          else
+            SERVICES="$SERVICE"
+          fi
+
+          for svc in $SERVICES; do
+            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
+              sed -i "s|imagePullPolicy: .*|imagePullPolicy: Always|g" k8s/apps/$svc/deployment.yaml
+              echo "  ✅ $svc → imagePullPolicy: Always"
             fi
           done
 
