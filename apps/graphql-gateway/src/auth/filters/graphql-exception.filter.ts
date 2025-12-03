@@ -4,6 +4,7 @@ import { GraphQLError } from 'graphql';
 @Catch()
 export class GraphQLExceptionFilter implements GqlExceptionFilter {
   catch(exception: unknown) {
+    console.error('GraphQLExceptionFilter caught exception: ', exception);
     if (exception instanceof GraphQLError) {
       return exception;
     }
@@ -36,19 +37,6 @@ export class GraphQLExceptionFilter implements GqlExceptionFilter {
       });
     }
 
-    if (exception instanceof Error) {
-      return new GraphQLError(exception.message, {
-        extensions: {
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        },
-      });
-    }
-
-    // else
-    return new GraphQLError('Internal server error', {
-      extensions: {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      },
-    });
+    return exception;
   }
 }
