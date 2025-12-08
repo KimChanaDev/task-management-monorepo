@@ -230,7 +230,7 @@ jobs:
           echo "📍 Secure Cookies: $SECURE_COOKIES"
 
           # Update Ingress
-          sed -i "s/host: .*/host: $DOMAIN/g" k8s/ingress/ingress.yaml
+          sed -i "s/host: task-platform.local/host: $DOMAIN/g" k8s/ingress/ingress.yaml
           if grep -q "api\." k8s/ingress/ingress.yaml; then
             sed -i "s/host: api\..*/host: api.$DOMAIN/g" k8s/ingress/ingress.yaml
           fi

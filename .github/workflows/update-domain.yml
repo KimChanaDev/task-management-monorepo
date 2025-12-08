@@ -97,7 +97,7 @@ jobs:
           echo "🌐 Updating Ingress host domain..."
 
           # Update ingress hosts
-          sed -i "s/host: .*/host: $DOMAIN/g" k8s/ingress/ingress.yaml
+          sed -i "s/host: task-platform.local/host: $DOMAIN/g" k8s/ingress/ingress.yaml
 
           # Also handle api subdomain if exists
           if grep -q "api\." k8s/ingress/ingress.yaml; then
