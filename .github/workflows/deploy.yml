@@ -28,525 +28,78 @@ on:
         description: "Docker image tag to deploy (default: main)"
         required: false
         default: "main"
-
-env:
-  REGISTRY: ghcr.io
-  VULTR_CLUSTER_REGION: sgp  # Singapore datacenter
-  # ===========================================
-  # Storage Class Configuration
-  # ===========================================
-  # Options:
-  #   - vultr-block-storage         : SSD, Delete policy (~$1/10GB/mo)
-  #   - vultr-block-storage-retain  : SSD, Retain policy (data persists after PVC deletion)
-  #   - vultr-block-storage-hdd     : HDD, Delete policy (~$1/40GB/mo, cheaper)
-  #   - vultr-block-storage-hdd-retain : HDD, Retain policy
-  #
-  # Recommendations:
-  #   - SSD: databases requiring fast I/O
-  #   - HDD: large storage, less I/O intensive (Vultr said size must be between 40GB and 40000GB per volume)
-  # ===========================================
-  STORAGE_CLASS_POSTGRES: vultr-block-storage       # Main database - SSD for performance
-  STORAGE_CLASS_REDIS: vultr-block-storage          # Cache - SSD for speed
-  STORAGE_CLASS_TIMESCALEDB: vultr-block-storage    # Time-series DB - SSD
-  STORAGE_CLASS_MINIO: vultr-block-storage          # File storage - SSD
-  STORAGE_CLASS_PULSAR: vultr-block-storage         # Message queue - SSD
-  STORAGE_CLASS_DEFAULT: vultr-block-storage        # Fallback for any other PVCs
+      protocol:
+        description: "Protocol for URLs (https for production, http for local)"
+        required: true
+        type: choice
+        options:
+          - https
+          - http
+        default: https
+      secure_cookies:
+        description: "Enable secure cookies (true for https, false for http)"
+        required: true
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "true"
 
 jobs:
   # ===========================================
-  # Deploy to Staging (Vultr Kubernetes)
+  # Deploy to Staging
   # ===========================================
   deploy-staging:
-    name: Deploy to Vultr Staging
+    name: Deploy to Staging
     if: github.event.inputs.environment == 'staging'
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Set lowercase image prefix
-        id: image
-        run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "prefix=${OWNER_LC}/task-platform" >> $GITHUB_OUTPUT
-          echo "📦 Image prefix: ${OWNER_LC}/task-platform"
-
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: "v1.34.1"
-
-      - name: Configure kubectl for Vultr
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-          
-          # Verify connection to Vultr cluster
-          echo "🔗 Connecting to Vultr Kubernetes cluster..."
-          kubectl cluster-info
-          kubectl get nodes
-
-      - name: Create Kubernetes Secrets
-        run: |
-          echo "🔐 Creating Kubernetes Secrets from GitHub Secrets..."
-          
-          # ===========================================
-          # Infrastructure Secrets
-          # ===========================================
-
-          # Apply namespace
-          kubectl apply -f k8s/namespaces/
-
-          # PostgreSQL Secret
-          echo "  📦 Creating postgres-secret..."
-          kubectl create secret generic postgres-secret \
-            --namespace=task-platform-infra \
-            --from-literal=username=${{ secrets.POSTGRES_USER }} \
-            --from-literal=password=${{ secrets.POSTGRES_PASSWORD }} \
-            --from-literal=database=${{ secrets.POSTGRES_DB }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # TimescaleDB Secret
-          echo "  📦 Creating timescaledb-secret..."
-          kubectl create secret generic timescaledb-secret \
-            --namespace=task-platform-infra \
-            --from-literal=username=${{ secrets.TIMESCALEDB_USER }} \
-            --from-literal=password=${{ secrets.TIMESCALEDB_PASSWORD }} \
-            --from-literal=database=${{ secrets.TIMESCALEDB_DB }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # MinIO Secret
-          echo "  📦 Creating minio-secret..."
-          kubectl create secret generic minio-secret \
-            --namespace=task-platform-infra \
-            --from-literal=root-user=${{ secrets.MINIO_ROOT_USER }} \
-            --from-literal=root-password=${{ secrets.MINIO_ROOT_PASSWORD }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # ===========================================
-          # Application Secrets
-          # ===========================================
-          
-          # Auth Service Secret
-          echo "  🔧 Creating auth-service-secret..."
-          kubectl create secret generic auth-service-secret \
-            --namespace=task-platform-apps \
-            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=auth" \
-            --from-literal=jwt-secret=${{ secrets.JWT_SECRET }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # Task Service Secret
-          echo "  🔧 Creating task-service-secret..."
-          kubectl create secret generic task-service-secret \
-            --namespace=task-platform-apps \
-            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=task" \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # Analytics Service Secret
-          echo "  🔧 Creating analytics-service-secret..."
-          kubectl create secret generic analytics-service-secret \
-            --namespace=task-platform-apps \
-            --from-literal=database-url="postgresql://${{ secrets.TIMESCALEDB_USER }}:${{ secrets.TIMESCALEDB_PASSWORD }}@timescaledb.task-platform-infra.svc.cluster.local:5432/${{ secrets.TIMESCALEDB_DB }}?schema=analytics" \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # File Service Secret
-          echo "  🔧 Creating file-service-secret..."
-          kubectl create secret generic file-service-secret \
-            --namespace=task-platform-apps \
-            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=file" \
-            --from-literal=minio-access-key=${{ secrets.MINIO_ROOT_USER }} \
-            --from-literal=minio-secret-key=${{ secrets.MINIO_ROOT_PASSWORD }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-
-          echo "✅ All secrets created successfully!"
-
-      - name: Update image tags in manifests
-        run: |
-          IMAGE_TAG="${{ github.event.inputs.image_tag }}"
-          SERVICE="${{ github.event.inputs.service }}"
-          IMAGE_PREFIX="${{ steps.image.outputs.prefix }}"
-
-          if [ "$SERVICE" == "all" ]; then
-            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
-          else
-            SERVICES="$SERVICE"
-          fi
-
-          for svc in $SERVICES; do
-            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
-              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${IMAGE_PREFIX}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
-            fi
-          done
-
-      - name: Update imagePullPolicy for cloud deployment
-        run: |
-          echo "🔄 Updating imagePullPolicy to Always..."
-          SERVICE="${{ github.event.inputs.service }}"
-
-          if [ "$SERVICE" == "all" ]; then
-            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
-          else
-            SERVICES="$SERVICE"
-          fi
-
-          for svc in $SERVICES; do
-            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
-              sed -i "s|imagePullPolicy: .*|imagePullPolicy: Always|g" k8s/apps/$svc/deployment.yaml
-              echo "  ✅ $svc → imagePullPolicy: Always"
-            fi
-          done
-
-      - name: Update StorageClass for Vultr (per application)
-        run: |
-          echo "🔧 Updating StorageClass per application..."
-          echo ""
-          
-          # Function to update storage class for a specific PVC file
-          update_storage_class() {
-            local file=$1
-            local storage_class=$2
-            local app_name=$3
-            if [ -f "$file" ]; then
-              sed -i "s/storageClassName: .*/storageClassName: $storage_class/g" "$file"
-              echo "  ✅ $app_name → $storage_class"
-            fi
-          }
-          
-          echo "📦 Infrastructure Storage:"
-          update_storage_class "k8s/infrastructure/postgres/pvc.yaml" "${{ env.STORAGE_CLASS_POSTGRES }}" "PostgreSQL"
-          update_storage_class "k8s/infrastructure/redis/pvc.yaml" "${{ env.STORAGE_CLASS_REDIS }}" "Redis"
-          update_storage_class "k8s/infrastructure/timescaledb/pvc.yaml" "${{ env.STORAGE_CLASS_TIMESCALEDB }}" "TimescaleDB"
-          update_storage_class "k8s/infrastructure/minio/pvc.yaml" "${{ env.STORAGE_CLASS_MINIO }}" "MinIO"
-          update_storage_class "k8s/infrastructure/pulsar/pvc.yaml" "${{ env.STORAGE_CLASS_PULSAR }}" "Pulsar"
-
-          # Update any remaining PVC files with default storage class
-          echo ""
-          echo "🔍 Checking for other PVCs..."
-          find k8s/ -name "pvc.yaml" -o -name "*-pvc.yaml" | while read file; do
-            if grep -q "storageClassName: standard" "$file" 2>/dev/null; then
-              sed -i "s/storageClassName: standard/storageClassName: ${{ env.STORAGE_CLASS_DEFAULT }}/g" "$file"
-              echo "  ✅ $(basename $(dirname $file)) → ${{ env.STORAGE_CLASS_DEFAULT }} (default)"
-            fi
-          done
-          
-          echo ""
-          echo "✅ StorageClass configuration complete!"
-
-      - name: Update Ingress host domain
-        run: |
-          echo "🌐 Updating Ingress host domain..."
-          DOMAIN="${{ secrets.DOMAIN_NAME }}"
-          
-          if [ -z "$DOMAIN" ]; then
-            echo "⚠️ DOMAIN_NAME secret not set, using default"
-            DOMAIN="task-platform.local"
-          fi
-          
-          # Update main ingress host
-          sed -i "s/host: task-platform.local/host: $DOMAIN/g" k8s/ingress/ingress.yaml
-          sed -i "s/host: api.task-platform.local/host: api.$DOMAIN/g" k8s/ingress/ingress.yaml
-          
-          echo "  ✅ Main domain: $DOMAIN"
-          echo "  ✅ API domain: api.$DOMAIN"
-
-      - name: Deploy to Kubernetes
-        run: |
-          SERVICE="${{ github.event.inputs.service }}"
-
-          if [ "$SERVICE" == "all" ]; then
-            # Deploy infrastructure first
-            kubectl apply -f k8s/infrastructure/ --recursive || true
-            
-            # Deploy all apps
-            kubectl apply -f k8s/apps/ --recursive
-            
-            # Apply ingress
-            kubectl apply -f k8s/ingress/
-          else
-            # Deploy specific service
-            kubectl apply -f k8s/apps/$SERVICE/ --recursive
-          fi
-
-      - name: Verify deployment
-        run: |
-          NAMESPACE="task-platform-staging"
-          SERVICE="${{ github.event.inputs.service }}"
-
-          if [ "$SERVICE" == "all" ]; then
-            kubectl rollout status deployment --timeout=300s
-          else
-            kubectl rollout status deployment/$SERVICE --timeout=300s
-          fi
-
-      - name: Send deployment notification
-        if: always()
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          payload: |
-            {
-              "text": "Vultr Staging Deployment: ${{ job.status }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🚀 Vultr Staging Deployment*\n*Status:* ${{ job.status }}\n*Service:* ${{ github.event.inputs.service }}\n*Tag:* ${{ github.event.inputs.image_tag }}\n*Actor:* ${{ github.actor }}\n*Cluster:* Vultr VKE (Singapore)"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        continue-on-error: true
+    uses: ./.github/workflows/deploy-step.yml
+    with:
+      environment: staging
+      service: ${{ github.event.inputs.service }}
+      image_tag: ${{ github.event.inputs.image_tag }}
+      kubectl_version: "v1.34.1"
+      apply_hpa: false
+      protocol: ${{ github.event.inputs.protocol }}
+      secure_cookies: ${{ github.event.inputs.secure_cookies }}
+    secrets:
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      TIMESCALEDB_USER: ${{ secrets.TIMESCALEDB_USER }}
+      TIMESCALEDB_PASSWORD: ${{ secrets.TIMESCALEDB_PASSWORD }}
+      TIMESCALEDB_DB: ${{ secrets.TIMESCALEDB_DB }}
+      MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+      MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   # ===========================================
-  # Deploy to Production (Vultr Kubernetes)
+  # Deploy to Production
   # ===========================================
   deploy-production:
-    name: Deploy to Vultr Production
+    name: Deploy to Production
     if: github.event.inputs.environment == 'production'
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Set lowercase image prefix
-        id: image
-        run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "prefix=${OWNER_LC}/task-platform" >> $GITHUB_OUTPUT
-          echo "📦 Image prefix: ${OWNER_LC}/task-platform"
-
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: "v1.29.0"
-
-      - name: Configure kubectl for Vultr
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-          
-          # Verify connection to Vultr cluster
-          echo "🔗 Connecting to Vultr Kubernetes cluster..."
-          kubectl cluster-info
-          kubectl get nodes
-
-      - name: Create Kubernetes Secrets
-        run: |
-          echo "🔐 Creating Kubernetes Secrets from GitHub Secrets..."
-          
-          # ===========================================
-          # Infrastructure Secrets
-          # ===========================================
-          
-          # Apply namespace
-          kubectl apply -f k8s/namespaces/
-
-          # PostgreSQL Secret
-          echo "  📦 Creating postgres-secret..."
-          kubectl create secret generic postgres-secret \
-            --namespace=task-platform-infra \
-            --from-literal=username=${{ secrets.POSTGRES_USER }} \
-            --from-literal=password=${{ secrets.POSTGRES_PASSWORD }} \
-            --from-literal=database=${{ secrets.POSTGRES_DB }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # TimescaleDB Secret
-          echo "  📦 Creating timescaledb-secret..."
-          kubectl create secret generic timescaledb-secret \
-            --namespace=task-platform-infra \
-            --from-literal=username=${{ secrets.TIMESCALEDB_USER }} \
-            --from-literal=password=${{ secrets.TIMESCALEDB_PASSWORD }} \
-            --from-literal=database=${{ secrets.TIMESCALEDB_DB }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # MinIO Secret
-          echo "  📦 Creating minio-secret..."
-          kubectl create secret generic minio-secret \
-            --namespace=task-platform-infra \
-            --from-literal=root-user=${{ secrets.MINIO_ROOT_USER }} \
-            --from-literal=root-password=${{ secrets.MINIO_ROOT_PASSWORD }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # ===========================================
-          # Application Secrets
-          # ===========================================
-          
-          # Auth Service Secret
-          echo "  🔧 Creating auth-service-secret..."
-          kubectl create secret generic auth-service-secret \
-            --namespace=task-platform-apps \
-            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=auth" \
-            --from-literal=jwt-secret=${{ secrets.JWT_SECRET }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # Task Service Secret
-          echo "  🔧 Creating task-service-secret..."
-          kubectl create secret generic task-service-secret \
-            --namespace=task-platform-apps \
-            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=task" \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # Analytics Service Secret
-          echo "  🔧 Creating analytics-service-secret..."
-          kubectl create secret generic analytics-service-secret \
-            --namespace=task-platform-apps \
-            --from-literal=database-url="postgresql://${{ secrets.TIMESCALEDB_USER }}:${{ secrets.TIMESCALEDB_PASSWORD }}@timescaledb.task-platform-infra.svc.cluster.local:5432/${{ secrets.TIMESCALEDB_DB }}?schema=analytics" \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # File Service Secret
-          echo "  🔧 Creating file-service-secret..."
-          kubectl create secret generic file-service-secret \
-            --namespace=task-platform-apps \
-            --from-literal=database-url="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres.task-platform-infra.svc.cluster.local:5432/${{ secrets.POSTGRES_DB }}?schema=file" \
-            --from-literal=minio-access-key=${{ secrets.MINIO_ROOT_USER }} \
-            --from-literal=minio-secret-key=${{ secrets.MINIO_ROOT_PASSWORD }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          echo "✅ All secrets created successfully!"
-
-      - name: Update image tags in manifests
-        run: |
-          IMAGE_TAG="${{ github.event.inputs.image_tag }}"
-          SERVICE="${{ github.event.inputs.service }}"
-          IMAGE_PREFIX="${{ steps.image.outputs.prefix }}"
-
-          if [ "$SERVICE" == "all" ]; then
-            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
-          else
-            SERVICES="$SERVICE"
-          fi
-
-          for svc in $SERVICES; do
-            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
-              sed -i "s|image: .*/$svc:.*|image: ${{ env.REGISTRY }}/${IMAGE_PREFIX}/$svc:$IMAGE_TAG|g" k8s/apps/$svc/deployment.yaml
-            fi
-          done
-
-      - name: Update imagePullPolicy for cloud deployment
-        run: |
-          echo "🔄 Updating imagePullPolicy to Always..."
-          SERVICE="${{ github.event.inputs.service }}"
-
-          if [ "$SERVICE" == "all" ]; then
-            SERVICES="auth-service task-service analytics-service notification-service file-service graphql-gateway svelte-web"
-          else
-            SERVICES="$SERVICE"
-          fi
-
-          for svc in $SERVICES; do
-            if [ -f "k8s/apps/$svc/deployment.yaml" ]; then
-              sed -i "s|imagePullPolicy: .*|imagePullPolicy: Always|g" k8s/apps/$svc/deployment.yaml
-              echo "  ✅ $svc → imagePullPolicy: Always"
-            fi
-          done
-
-      - name: Update StorageClass for Vultr (per application)
-        run: |
-          echo "🔧 Updating StorageClass per application..."
-          echo ""
-          
-          # Function to update storage class for a specific PVC file
-          update_storage_class() {
-            local file=$1
-            local storage_class=$2
-            local app_name=$3
-            if [ -f "$file" ]; then
-              sed -i "s/storageClassName: .*/storageClassName: $storage_class/g" "$file"
-              echo "  ✅ $app_name → $storage_class"
-            fi
-          }
-          
-          echo "📦 Infrastructure Storage:"
-          update_storage_class "k8s/infrastructure/postgres/pvc.yaml" "${{ env.STORAGE_CLASS_POSTGRES }}" "PostgreSQL"
-          update_storage_class "k8s/infrastructure/redis/pvc.yaml" "${{ env.STORAGE_CLASS_REDIS }}" "Redis"
-          update_storage_class "k8s/infrastructure/timescaledb/pvc.yaml" "${{ env.STORAGE_CLASS_TIMESCALEDB }}" "TimescaleDB"
-          update_storage_class "k8s/infrastructure/minio/pvc.yaml" "${{ env.STORAGE_CLASS_MINIO }}" "MinIO"
-          update_storage_class "k8s/infrastructure/pulsar/pvc.yaml" "${{ env.STORAGE_CLASS_PULSAR }}" "Pulsar"
-          
-          # Update any remaining PVC files with default storage class
-          echo ""
-          echo "🔍 Checking for other PVCs..."
-          find k8s/ -name "pvc.yaml" -o -name "*-pvc.yaml" | while read file; do
-            if grep -q "storageClassName: standard" "$file" 2>/dev/null; then
-              sed -i "s/storageClassName: standard/storageClassName: ${{ env.STORAGE_CLASS_DEFAULT }}/g" "$file"
-              echo "  ✅ $(basename $(dirname $file)) → ${{ env.STORAGE_CLASS_DEFAULT }} (default)"
-            fi
-          done
-          
-          echo "✅ StorageClass configuration complete!"
-
-      - name: Update Ingress host domain
-        run: |
-          echo "🌐 Updating Ingress host domain..."
-          DOMAIN="${{ secrets.DOMAIN_NAME }}"
-          
-          if [ -z "$DOMAIN" ]; then
-            echo "⚠️ DOMAIN_NAME secret not set, using default"
-            DOMAIN="task-platform.local"
-          fi
-          
-          # Update main ingress host
-          sed -i "s/host: task-platform.local/host: $DOMAIN/g" k8s/ingress/ingress.yaml
-          sed -i "s/host: api.task-platform.local/host: api.$DOMAIN/g" k8s/ingress/ingress.yaml
-          
-          echo "  ✅ Main domain: $DOMAIN"
-          echo "  ✅ API domain: api.$DOMAIN"
-
-      - name: Deploy to Kubernetes
-        run: |
-          SERVICE="${{ github.event.inputs.service }}"
-
-          if [ "$SERVICE" == "all" ]; then
-            # Deploy infrastructure first
-            kubectl apply -f k8s/infrastructure/ --recursive || true
-            
-            # Deploy all apps
-            kubectl apply -f k8s/apps/ --recursive
-            
-            # Apply ingress
-            kubectl apply -f k8s/ingress/
-            
-            # Apply HPA
-            kubectl apply -f k8s/apps/hpa.yaml
-          else
-            # Deploy specific service
-            kubectl apply -f k8s/apps/$SERVICE/ --recursive
-          fi
-
-      - name: Verify deployment
-        run: |
-          NAMESPACE="task-platform"
-          SERVICE="${{ github.event.inputs.service }}"
-
-          if [ "$SERVICE" == "all" ]; then
-            kubectl rollout status deployment --timeout=300s
-          else
-            kubectl rollout status deployment/$SERVICE --timeout=300s
-          fi
-
-      - name: Send deployment notification
-        if: always()
-        uses: slackapi/slack-github-action@v1.26.0
-        with:
-          payload: |
-            {
-              "text": "Vultr Production Deployment: ${{ job.status }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🚀 Vultr Production Deployment*\n*Status:* ${{ job.status }}\n*Service:* ${{ github.event.inputs.service }}\n*Tag:* ${{ github.event.inputs.image_tag }}\n*Actor:* ${{ github.actor }}\n*Cluster:* Vultr VKE (Singapore)"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        continue-on-error: true
+    uses: ./.github/workflows/deploy-step.yml
+    with:
+      environment: production
+      service: ${{ github.event.inputs.service }}
+      image_tag: ${{ github.event.inputs.image_tag }}
+      kubectl_version: "v1.29.0"
+      apply_hpa: true
+      protocol: ${{ github.event.inputs.protocol }}
+      secure_cookies: ${{ github.event.inputs.secure_cookies }}
+    secrets:
+      KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      TIMESCALEDB_USER: ${{ secrets.TIMESCALEDB_USER }}
+      TIMESCALEDB_PASSWORD: ${{ secrets.TIMESCALEDB_PASSWORD }}
+      TIMESCALEDB_DB: ${{ secrets.TIMESCALEDB_DB }}
+      MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+      MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
