@@ -106,19 +106,22 @@ jobs:
       - name: Run database migrations
         run: |
           cd apps/auth-service
-          DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb" npx prisma migrate deploy
+          DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=auth" npx prisma migrate deploy
 
           cd ../task-service
-          DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb" npx prisma migrate deploy
+          DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=task" npx prisma migrate deploy
+
+          # cd ../file-service
+          # DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=file" npx prisma migrate deploy
 
           # cd ../analytics-service
-          # DATABASE_URL="postgresql://analyticsuser:analyticspass@localhost:5433/analyticsdb" npx prisma migrate deploy
+          # DATABASE_URL="postgresql://analyticsuser:analyticspass@localhost:5433/analyticsdb?schema=analytics" npx prisma migrate deploy
 
       - name: Start services
         run: |
           # Start auth service
           cd apps/auth-service
-          DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb" \
+          DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=auth" \
           NODE_ENV="test" \
           APP_VERSION="1.0.0" \
           HTTP_PORT=4000 \
@@ -132,7 +135,7 @@ jobs:
 
           # Start task service
           cd ../task-service
-          DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb" \
+          DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=task" \
           NODE_ENV="test" \
           APP_VERSION="1.0.0" \
           HTTP_PORT=4001 \
@@ -143,7 +146,7 @@ jobs:
 
           # # Start analytics service
           # cd ../analytics-service
-          # DATABASE_URL="postgresql://analyticsuser:analyticspass@localhost:5433/analyticsdb" \
+          # DATABASE_URL="postgresql://analyticsuser:analyticspass@localhost:5433/analyticsdb?schema=analytics" \
           # NODE_ENV="test" \
           # APP_VERSION="1.0.0" \
           # HTTP_PORT=4005 \
@@ -153,7 +156,7 @@ jobs:
 
           # # Start file service
           # cd ../file-service
-          # DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb" \
+          # DATABASE_URL="postgresql://taskuser:taskpass@localhost:5432/taskdb?schema=file" \
           # NODE_ENV="test" \
           # APP_VERSION="1.0.0" \
           # HTTP_PORT=4006 \
