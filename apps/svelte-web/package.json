@@ -12,9 +12,13 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"test": "playwright install && playwright test",
+		"test:ui": "playwright install && playwright test --ui",
+		"test:headed": "playwright install && playwright test --headed"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.57.0",
 		"@repo/eslint-config": "*",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-node": "^5.4.0",
