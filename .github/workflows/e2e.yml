@@ -215,7 +215,7 @@ jobs:
           # Check if services are responding
           echo "Checking service health..."
           for i in {1..30}; do
-            if curl -f http://localhost:4002/health 2>/dev/null; then
+            if curl -f http://localhost:4002/healthcheck 2>/dev/null; then
               echo "GraphQL gateway is ready"
               break
             fi
