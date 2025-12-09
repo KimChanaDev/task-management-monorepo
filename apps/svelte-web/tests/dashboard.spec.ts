@@ -136,7 +136,8 @@ test.describe('Dashboard', () => {
 		await page.goto('/dashboard');
 
 		// Get initial count
-		const initialCount = await page.locator('text=Total Tasks').locator('..').textContent();
+		const initialCountText = await page.locator('text=Total Tasks').locator('..').textContent();
+		const initialCount = parseInt(initialCountText?.match(/\d+/)?.[0] || '0');
 
 		// Create a new task
 		await page
@@ -148,12 +149,18 @@ test.describe('Dashboard', () => {
 		await page.getByLabel(/description/i).fill('Testing statistics update');
 		await page.getByRole('button', { name: /create task/i }).click();
 
-		// Return to dashboard and verify count increased
+		// Return to dashboard and wait for data to refresh
 		await page.goto('/dashboard');
+
+		// Wait for loading spinner to disappear
 		const loadingSpinner = page.locator('.animate-spin');
 		await expect(loadingSpinner).toHaveCount(0, { timeout: 10000 });
 
-		const updatedCount = await page.locator('text=Total Tasks').locator('..').textContent();
-		expect(updatedCount).not.toBe(initialCount);
+		// Wait for the count to update (polling with retry)
+		await expect(async () => {
+			const updatedCountText = await page.locator('text=Total Tasks').locator('..').textContent();
+			const updatedCount = parseInt(updatedCountText?.match(/\d+/)?.[0] || '0');
+			expect(updatedCount).toBeGreaterThan(initialCount);
+		}).toPass({ timeout: 15000, intervals: [1000] });
 	});
 });
