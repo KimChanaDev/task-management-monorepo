@@ -1,4 +1,4 @@
-# 📋 Task Platform - Project Overview
+# 📋 Task Management - Project Overview
 
 > A comprehensive showcase project task management platform built with microservices architecture, featuring real-time notifications, analytics, and file management capabilities.
 
@@ -6,7 +6,13 @@
 
 ## 🎯 Project Description
 
-**Task Platform** is a modern, scalable task management system designed using a microservices architecture. The platform enables users to create, manage, and track tasks with real-time notifications, analytics insights, and file attachments. Built with TypeScript, NestJS, SvelteKit and deployed on Kubernetes, this project demonstrates production-ready microservices patterns.
+**Task Management** is a modern, scalable task management system designed using a microservices architecture. The platform enables users to create, manage, and track tasks with real-time notifications, analytics insights, and file attachments. Built with TypeScript, NestJS, SvelteKit and deployed on Kubernetes, this project demonstrates production-ready microservices patterns.
+
+## 🤝 Contributing
+
+This is a personal learning project, created for educational purposes!
+
+---
 
 ## 🏗️ Architecture
 
@@ -403,12 +409,6 @@ Access GraphQL Playground at: http://localhost:4002/graphql
 
 ### gRPC Services
 Proto definitions available in: `packages/grpc/proto/`
-
----
-
-## 🤝 Contributing
-
-This is a personal learning project, created for educational purposes!
 
 ---
 
